@@ -1,10 +1,25 @@
 <script setup>
-import { Menu, X } from '@lucide/vue'
+import { LogOut, Menu, UserRound, X } from '@lucide/vue'
 import { ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { signOut, useAuth } from '../auth'
 
 const isMenuOpen = ref(false)
+const isSigningOut = ref(false)
 const route = useRoute()
+const router = useRouter()
+const authState = useAuth()
+
+async function handleSignOut() {
+  isSigningOut.value = true
+
+  try {
+    await signOut()
+    await router.push('/')
+  } finally {
+    isSigningOut.value = false
+  }
+}
 
 watch(
   () => route.fullPath,
@@ -45,8 +60,25 @@ watch(
           <RouterLink to="/resources">Resources</RouterLink>
         </div>
         <div class="primary-navigation__actions">
-          <RouterLink class="button button--quiet" to="/login">Log in</RouterLink>
-          <RouterLink class="button button--primary" to="/register">Create account</RouterLink>
+          <template v-if="authState.user">
+            <RouterLink class="button button--quiet" to="/account">
+              <UserRound :size="19" aria-hidden="true" />
+              Account
+            </RouterLink>
+            <button
+              class="button button--primary"
+              type="button"
+              :disabled="isSigningOut"
+              @click="handleSignOut"
+            >
+              <LogOut :size="19" aria-hidden="true" />
+              {{ isSigningOut ? 'Logging out...' : 'Log out' }}
+            </button>
+          </template>
+          <template v-else>
+            <RouterLink class="button button--quiet" to="/login">Log in</RouterLink>
+            <RouterLink class="button button--primary" to="/register">Create account</RouterLink>
+          </template>
         </div>
       </nav>
     </div>

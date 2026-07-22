@@ -2,9 +2,11 @@
 import { ArrowLeft, Clock, ExternalLink, MapPin, Phone } from '@lucide/vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuth } from '../auth'
 import { getResourceById } from '../data/resources'
 
 const route = useRoute()
+const authState = useAuth()
 const resource = computed(() => getResourceById(route.params.id))
 </script>
 
@@ -34,8 +36,13 @@ const resource = computed(() => getResourceById(route.params.id))
 
           <section class="rating-preview" aria-labelledby="rating-title">
             <h2 id="rating-title">Helpfulness rating</h2>
-            <p>Members can share a rating after signing in.</p>
-            <RouterLink class="button button--secondary" to="/login">Log in to rate</RouterLink>
+            <template v-if="authState.user">
+              <p>Rating is not available for this resource yet.</p>
+            </template>
+            <template v-else>
+              <p>Members can share a rating after signing in.</p>
+              <RouterLink class="button button--secondary" to="/login">Log in to rate</RouterLink>
+            </template>
           </section>
         </article>
 

@@ -1,13 +1,56 @@
 <script setup>
 import { LogIn } from '@lucide/vue'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getAuthErrorMessage, signIn } from '../auth'
+import { isFirebaseConfigured } from '../firebase'
+import { validateLogin } from '../utils/authValidation'
 
 const email = ref('')
 const password = ref('')
-const message = ref('')
+const formError = ref('')
+const isSubmitting = ref(false)
+const fieldErrors = reactive({
+  email: '',
+  password: '',
+})
+const route = useRoute()
+const router = useRouter()
 
-function submitForm() {
-  message.value = 'Secure sign-in will be connected during Firebase setup.'
+function clearErrors() {
+  fieldErrors.email = ''
+  fieldErrors.password = ''
+  formError.value = ''
+}
+
+function getRedirectTarget() {
+  const redirect = route.query.redirect
+
+  return typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+    ? redirect
+    : '/account'
+}
+
+async function submitForm() {
+  clearErrors()
+  const errors = validateLogin({ email: email.value, password: password.value })
+
+  if (Object.keys(errors).length) {
+    Object.assign(fieldErrors, errors)
+    formError.value = 'Check the highlighted fields and try again.'
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    await signIn(email.value, password.value)
+    await router.replace(getRedirectTarget())
+  } catch (error) {
+    formError.value = getAuthErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -20,10 +63,24 @@ function submitForm() {
         <p>Access your saved account and resource ratings.</p>
       </div>
 
-      <form class="form-stack" @submit.prevent="submitForm">
+      <form class="form-stack" novalidate @submit.prevent="submitForm">
+        <p v-if="!isFirebaseConfigured" class="form-notice form-notice--error" role="alert">
+          Account access is not configured for this environment.
+        </p>
         <div class="form-field">
           <label for="login-email">Email address</label>
-          <input id="login-email" v-model="email" type="email" autocomplete="email" required />
+          <input
+            id="login-email"
+            v-model.trim="email"
+            type="email"
+            autocomplete="email"
+            :aria-describedby="fieldErrors.email ? 'login-email-error' : undefined"
+            :aria-invalid="Boolean(fieldErrors.email)"
+            required
+          />
+          <p v-if="fieldErrors.email" id="login-email-error" class="field-error">
+            {{ fieldErrors.email }}
+          </p>
         </div>
         <div class="form-field">
           <label for="login-password">Password</label>
@@ -32,14 +89,25 @@ function submitForm() {
             v-model="password"
             type="password"
             autocomplete="current-password"
+            :aria-describedby="fieldErrors.password ? 'login-password-error' : undefined"
+            :aria-invalid="Boolean(fieldErrors.password)"
             required
           />
+          <p v-if="fieldErrors.password" id="login-password-error" class="field-error">
+            {{ fieldErrors.password }}
+          </p>
         </div>
-        <button class="button button--primary button--full" type="submit">
+        <button
+          class="button button--primary button--full"
+          type="submit"
+          :disabled="isSubmitting || !isFirebaseConfigured"
+        >
           <LogIn :size="19" aria-hidden="true" />
-          Log in
+          {{ isSubmitting ? 'Logging in...' : 'Log in' }}
         </button>
-        <p v-if="message" class="form-notice" role="status">{{ message }}</p>
+        <p v-if="formError" class="form-notice form-notice--error" role="alert">
+          {{ formError }}
+        </p>
       </form>
 
       <p class="auth-panel__switch">

@@ -336,6 +336,11 @@ p {
   width: 100%;
 }
 
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -590,6 +595,16 @@ p {
   border-color: var(--colour-primary);
 }
 
+.form-field input[aria-invalid='true'] {
+  border-color: #b03a3a;
+}
+
+.field-error {
+  margin: 6px 0 0;
+  color: #8f2f2f;
+  font-size: 0.84rem;
+}
+
 .input-with-icon {
   position: relative;
 }
@@ -770,11 +785,104 @@ p {
   font-size: 0.9rem;
 }
 
+.form-notice--error {
+  border-left-color: #b03a3a;
+  background: #fff1ef;
+  color: #742525;
+}
+
 .auth-panel__switch {
   margin: 26px 0 0;
   padding-top: 22px;
   border-top: 1px solid var(--colour-border);
   text-align: center;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.8fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.account-panel,
+.account-note {
+  padding: 30px;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.account-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.account-panel__heading > svg,
+.account-note > svg {
+  flex: 0 0 auto;
+  color: var(--colour-primary);
+}
+
+.account-panel__heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.account-panel__heading h2 {
+  margin-bottom: 0;
+}
+
+.account-details {
+  margin: 0 0 28px;
+  border-top: 1px solid var(--colour-border);
+}
+
+.account-details > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--colour-border);
+}
+
+.account-details dt {
+  color: var(--colour-muted);
+  font-weight: 700;
+}
+
+.account-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.role-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--colour-primary-light);
+  color: var(--colour-primary-dark);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.account-note {
+  background: var(--colour-surface);
+}
+
+.account-note h2 {
+  margin-top: 18px;
+  font-size: 1.35rem;
+}
+
+.account-note p {
+  color: var(--colour-muted);
+}
+
+.account-note .text-link {
+  margin-top: 4px;
 }
 
 .status-page {
@@ -933,6 +1041,10 @@ p {
   .contact-card {
     max-width: 560px;
   }
+
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 767px) {
@@ -1022,6 +1134,16 @@ p {
 
   .auth-panel {
     padding: 28px 22px;
+  }
+
+  .account-panel,
+  .account-note {
+    padding: 24px 20px;
+  }
+
+  .account-details > div {
+    grid-template-columns: 1fr;
+    gap: 5px;
   }
 
   .site-footer__grid,

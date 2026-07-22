@@ -1,5 +1,8 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import { useAuth } from '../auth'
+
+const authState = useAuth()
 </script>
 
 <template>
@@ -14,7 +17,9 @@ import { RouterLink } from 'vue-router'
       <nav class="site-footer__links" aria-label="Footer navigation">
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/resources">Resources</RouterLink>
-        <RouterLink to="/login">Log in</RouterLink>
+        <RouterLink :to="authState.user ? '/account' : '/login'">
+          {{ authState.user ? 'Account' : 'Log in' }}
+        </RouterLink>
       </nav>
     </div>
     <div class="site-container site-footer__legal">

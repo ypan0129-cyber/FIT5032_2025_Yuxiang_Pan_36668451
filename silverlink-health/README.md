@@ -4,7 +4,19 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-Stage 1 provides the responsive public interface, local sample resource data, search and filters. Firebase authentication, Firestore data, role-based access and ratings will be added in later stages.
+Stage 2 adds Firebase Authentication with email/password sign-in, a protected member account page, and a Firestore profile document for every registered member. The public resource directory continues to use local sample data until a later stage.
+
+All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. Staff permissions will be added in a later stage by an administrator editing the role in the Firebase console.
+
+## Firebase setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Add the Firebase Web app configuration for the `sliverlink-health` project to `.env.local`.
+3. Enable **Authentication → Sign-in method → Email/Password**.
+4. Create a Cloud Firestore database in production mode. This project uses the Sydney region (`australia-southeast1`).
+5. Publish `firestore.rules` in the Firebase console (or deploy it with the Firebase CLI).
+
+The real `.env.local` file is ignored by Git. Never add a Firebase service-account private key to this repository. Firebase Web configuration values are client configuration; access control is enforced by Authentication and Firestore Security Rules.
 
 ## Run locally
 
@@ -17,6 +29,12 @@ npm run dev
 
 ```sh
 npm run build
+```
+
+Run the validation tests with:
+
+```sh
+npm test
 ```
 
 The interface uses custom CSS and does not use a pre-built CSS template.

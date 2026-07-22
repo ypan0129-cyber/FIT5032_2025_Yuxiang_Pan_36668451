@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsUserDocument(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validDisplayName(displayName) {
+      return displayName is string
+        && displayName.size() >= 2
+        && displayName.size() <= 80;
+    }
+
+    match /users/{userId} {
+      allow create: if ownsUserDocument(userId)
+        && request.resource.data.keys().hasAll(['displayName', 'role', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['displayName', 'role', 'createdAt'])
+        && validDisplayName(request.resource.data.displayName)
+        && request.resource.data.role == 'member'
+        && request.resource.data.createdAt == request.time;
+
+      allow get: if ownsUserDocument(userId);
+      allow list, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
