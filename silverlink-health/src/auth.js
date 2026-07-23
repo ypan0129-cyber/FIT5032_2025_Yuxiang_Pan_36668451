@@ -30,6 +30,25 @@ async function loadProfile(user, db) {
     : 'Your account profile could not be found. Please contact support.'
 }
 
+export async function refreshProfile() {
+  if (!state.user) {
+    state.profile = null
+    state.profileError = ''
+    return null
+  }
+
+  const { db } = requireFirebase()
+
+  try {
+    await loadProfile(state.user, db)
+    return state.profile
+  } catch {
+    state.profile = null
+    state.profileError = 'Your profile could not be loaded. Please try again.'
+    return null
+  }
+}
+
 export function initialiseAuth() {
   if (initialisePromise) {
     return initialisePromise

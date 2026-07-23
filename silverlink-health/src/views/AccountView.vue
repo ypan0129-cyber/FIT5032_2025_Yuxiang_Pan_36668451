@@ -10,8 +10,22 @@ const isSigningOut = ref(false)
 const signOutError = ref('')
 
 const displayName = computed(
-  () => authState.profile?.displayName || authState.user?.displayName || 'Member',
+  () => authState.profile?.displayName || authState.user?.displayName || 'Account holder',
 )
+const isStaff = computed(() => authState.profile?.role === 'staff')
+const accountTypeLabel = computed(() => {
+  if (authState.profile?.role === 'staff') return 'Staff account'
+  if (authState.profile?.role === 'member') return 'Member account'
+  return 'Account details'
+})
+const roleLabel = computed(() => {
+  const labels = {
+    member: 'Member',
+    staff: 'Staff',
+  }
+
+  return labels[authState.profile?.role] || 'Role unavailable'
+})
 
 async function handleSignOut() {
   isSigningOut.value = true
@@ -31,7 +45,7 @@ async function handleSignOut() {
 <template>
   <section class="page-intro">
     <div class="site-container page-intro__inner">
-      <p class="eyebrow">Member account</p>
+      <p class="eyebrow">{{ accountTypeLabel }}</p>
       <h1>Your account</h1>
       <p>Review your sign-in details and account access.</p>
     </div>
@@ -55,7 +69,7 @@ async function handleSignOut() {
           </div>
           <div>
             <dt>Account role</dt>
-            <dd><span class="role-badge">{{ authState.profile?.role || 'Member' }}</span></dd>
+            <dd><span class="role-badge">{{ roleLabel }}</span></dd>
           </div>
         </dl>
 
@@ -79,12 +93,19 @@ async function handleSignOut() {
 
       <aside class="account-note" aria-labelledby="account-security-title">
         <ShieldCheck :size="26" aria-hidden="true" />
-        <h2 id="account-security-title">Your access is protected</h2>
-        <p>
-          New accounts receive member access. Staff access can only be assigned by an authorised
-          administrator.
-        </p>
-        <RouterLink class="text-link" to="/resources">Browse support resources</RouterLink>
+        <template v-if="isStaff">
+          <h2 id="account-security-title">Staff access is active</h2>
+          <p>Your authorised role provides access to the staff resource review workspace.</p>
+          <RouterLink class="text-link" to="/staff">Open staff workspace</RouterLink>
+        </template>
+        <template v-else>
+          <h2 id="account-security-title">Your access is protected</h2>
+          <p>
+            New accounts receive member access. Staff access can only be assigned by an authorised
+            administrator.
+          </p>
+          <RouterLink class="text-link" to="/resources">Browse support resources</RouterLink>
+        </template>
       </aside>
     </div>
   </section>

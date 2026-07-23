@@ -2,14 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
     function ownsUserDocument(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return signedIn() && request.auth.uid == userId;
     }
 
     function validDisplayName(displayName) {
       return displayName is string
         && displayName.size() >= 2
         && displayName.size() <= 80;
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    function validResourceId(resourceId) {
+      return resourceId in [
+        'lifeline-australia',
+        'beyond-blue',
+        'head-to-health',
+        'friendline',
+        'grief-australia',
+        'sleep-health-foundation'
+      ];
+    }
+
+    function validRating(rating) {
+      return rating.keys().hasAll(['score', 'createdAt', 'updatedAt'])
+        && rating.keys().hasOnly(['score', 'createdAt', 'updatedAt'])
+        && rating.score is int
+        && rating.score >= 1
+        && rating.score <= 5
+        && rating.createdAt is timestamp
+        && rating.updatedAt is timestamp;
     }
 
     match /users/{userId} {
@@ -22,6 +53,28 @@ service cloud.firestore {
 
       allow get: if ownsUserDocument(userId);
       allow list, update, delete: if false;
+    }
+
+    match /resources/{resourceId}/ratings/{userId} {
+      allow read: if validResourceId(resourceId);
+
+      allow create: if validResourceId(resourceId)
+        && ownsUserDocument(userId)
+        && hasRole('member')
+        && validRating(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if validResourceId(resourceId)
+        && ownsUserDocument(userId)
+        && hasRole('member')
+        && validRating(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['score', 'updatedAt']);
+
+      allow delete: if false;
     }
 
     match /{document=**} {

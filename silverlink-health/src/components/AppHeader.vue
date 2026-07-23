@@ -58,6 +58,7 @@ watch(
         <div class="primary-navigation__links">
           <RouterLink to="/">Home</RouterLink>
           <RouterLink to="/resources">Resources</RouterLink>
+          <RouterLink v-if="authState.profile?.role === 'staff'" to="/staff">Staff</RouterLink>
         </div>
         <div class="primary-navigation__actions">
           <template v-if="authState.user">

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { initialiseAuth, useAuth } from '../auth'
+import { initialiseAuth, refreshProfile, useAuth } from '../auth'
 import AccessDeniedView from '../views/AccessDeniedView.vue'
 import AccountView from '../views/AccountView.vue'
 import HomeView from '../views/HomeView.vue'
@@ -8,6 +8,7 @@ import NotFoundView from '../views/NotFoundView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ResourceDetailView from '../views/ResourceDetailView.vue'
 import ResourcesView from '../views/ResourcesView.vue'
+import StaffView from '../views/StaffView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,12 @@ const router = createRouter({
       meta: { requiresGuest: true },
     },
     { path: '/account', name: 'account', component: AccountView, meta: { requiresAuth: true } },
+    {
+      path: '/staff',
+      name: 'staff',
+      component: StaffView,
+      meta: { requiresAuth: true, requiredRole: 'staff' },
+    },
     { path: '/access-denied', name: 'access-denied', component: AccessDeniedView },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
@@ -34,11 +41,21 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await initialiseAuth()
   const authState = useAuth()
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const requiredRole = to.matched.find((record) => record.meta.requiredRole)?.meta.requiredRole
 
-  if (to.meta.requiresAuth && !authState.user) {
+  if (requiresAuth && !authState.user) {
     return {
       name: 'login',
       query: { redirect: to.fullPath },
+    }
+  }
+
+  if (requiredRole) {
+    await refreshProfile()
+
+    if (authState.profile?.role !== requiredRole) {
+      return { name: 'access-denied' }
     }
   }
 
