@@ -4,7 +4,7 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-Stage 3 adds role-based page access and a helpfulness rating for every support resource. Members can submit one score from 1 to 5 for each resource and update that score later. Everyone can view the aggregate average and rating count. Authorised staff accounts can open a protected resource review workspace.
+Stage 4 completes the A2 security hardening for business requirement C.4. It adds plain-text input checks, safe same-origin login redirects, a Content Security Policy, browser security headers and automated checks for unsafe HTML rendering. The matching Firestore rule change has been published to the `sliverlink-health` project.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -20,6 +20,25 @@ The public directory still reads its six service records from the local JavaScri
 6. To create a staff account, register a normal member, locate its UID in Firebase Authentication, open the matching `users/{uid}` document, and change only the `role` field from `member` to `staff`. Refresh or sign in again before testing `/staff`.
 
 The real `.env.local` file is ignored by Git. Never add a Firebase service-account private key to this repository. Firebase Web configuration values are client configuration; access control is enforced by Authentication and Firestore Security Rules.
+
+## Security controls
+
+- Vue text interpolation is used for user and resource content. The application
+  does not use `v-html`, `innerHTML` or similar direct HTML injection APIs.
+- Registration rejects `<` and `>` in profile names on the client, and
+  Firestore Security Rules apply the same restriction before storing a profile.
+- Email, password, display-name, resource-ID and rating-score limits are checked
+  before requests are sent. Firestore Rules independently enforce stored profile,
+  role, timestamp and rating values.
+- Post-login redirect values are parsed against a fixed application origin, so
+  absolute, protocol-relative and backslash-based external redirects are rejected.
+- The application defines a Content Security Policy and sends security headers
+  from the Vite development and preview servers, including clickjacking,
+  content-type, referrer and unnecessary browser-permission restrictions.
+- External resource links use `noopener noreferrer` when opening a new tab.
+- Authentication is handled by Firebase Authentication. Page guards improve the
+  interface, while Firestore Security Rules remain the authoritative data-access
+  boundary.
 
 ## Run locally
 
@@ -82,8 +101,8 @@ when a later stage is finished.
 
 ### Stage 3 — Staff access and resource ratings
 
-**Planned commit message:** `feat: add staff access and resource ratings`
-**Status:** Implementation complete locally; awaiting the user's commit and push.
+**Git checkpoint:** [`913bb12`](https://github.com/ypan0129-cyber/FIT5032_2025_Yuxiang_Pan_36668451/commit/913bb12) — `feat: add staff access and resource ratings`
+**Status:** Committed and pushed to `origin/main`.
 
 - Added `member` and `staff` role-aware navigation, account information and
   protected `/staff` route handling.
@@ -98,6 +117,29 @@ when a later stage is finished.
 - Verification completed: 8 automated tests passed, the production build passed,
   and mobile layout checks found no horizontal overflow.
 
+### Stage 4 — Application security hardening
+
+**Planned commit message:** `feat: add application security protections`
+**Status:** Implementation and Firestore Rules publication complete; awaiting the user's commit and push.
+
+- Added a plain-text validation boundary for profile names and mirrored the
+  restriction in Firestore Security Rules.
+- Added maximum email and password lengths to both validation logic and form
+  controls.
+- Replaced the basic login redirect check with same-origin URL parsing to block
+  external redirect variants.
+- Added a Content Security Policy and browser security headers for local
+  development and preview testing.
+- Added explicit `noopener noreferrer` protection to external resource links.
+- Added automated tests for malicious profile markup, oversized credentials,
+  unsafe redirects and direct HTML injection APIs.
+- Compiled the updated Firestore Rules with the local emulator, published them
+  to Firebase and confirmed that the security policy still permits rating reads.
+- Browser verification confirmed that malicious markup is displayed only as
+  rejected plain text, with no script dialog or Content Security Policy errors.
+- Verification completed: 14 automated tests passed, the production build passed,
+  `npm audit --omit=dev` found no vulnerabilities, and `git diff --check` passed.
+
 ### Later stages and submissions
 
 Add each later feature or submission below this line, keeping all earlier stage
@@ -105,7 +147,7 @@ records unchanged. Do not invent a commit hash before the corresponding commit
 has been created.
 
 ```md
-### Stage 4 — Short descriptive title
+### Stage 5 — Short descriptive title
 
 **Git checkpoint:** `abcdef1` — `commit subject`
 **Status:** Pending / committed and pushed to `origin/main`.

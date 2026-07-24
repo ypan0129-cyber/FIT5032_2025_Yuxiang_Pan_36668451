@@ -44,3 +44,27 @@ test('validateRegistration reports name, password and confirmation errors', () =
     },
   )
 })
+
+test('validateRegistration rejects markup in a profile name', () => {
+  assert.deepEqual(
+    validateRegistration({
+      displayName: '<img src=x onerror=alert(1)>',
+      email: 'jane@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+    }),
+    {
+      displayName: 'Name cannot contain < or > characters.',
+    },
+  )
+})
+
+test('validation limits oversized account credentials', () => {
+  const oversizedEmail = `${'a'.repeat(245)}@example.com`
+  const oversizedPassword = 'a'.repeat(65)
+
+  assert.deepEqual(validateLogin({ email: oversizedEmail, password: oversizedPassword }), {
+    email: 'Email address must contain no more than 254 characters.',
+    password: 'Password must contain no more than 64 characters.',
+  })
+})

@@ -13,7 +13,8 @@ service cloud.firestore {
     function validDisplayName(displayName) {
       return displayName is string
         && displayName.size() >= 2
-        && displayName.size() <= 80;
+        && displayName.size() <= 80
+        && displayName.matches('^[^<>]+$');
     }
 
     function hasRole(role) {

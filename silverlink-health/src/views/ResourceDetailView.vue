@@ -59,7 +59,7 @@ const resource = computed(() => getResourceById(route.params.id))
             class="button button--primary button--full"
             :href="resource.website"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             Visit website
             <ExternalLink :size="18" aria-hidden="true" />

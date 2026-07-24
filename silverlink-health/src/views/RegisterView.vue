@@ -92,6 +92,7 @@ async function submitForm() {
             v-model.trim="form.email"
             type="email"
             autocomplete="email"
+            maxlength="254"
             :aria-describedby="fieldErrors.email ? 'register-email-error' : undefined"
             :aria-invalid="Boolean(fieldErrors.email)"
             required

@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getAuthErrorMessage, signIn } from '../auth'
 import { isFirebaseConfigured } from '../firebase'
 import { validateLogin } from '../utils/authValidation'
+import { getSafeRedirectTarget } from '../utils/security'
 
 const email = ref('')
 const password = ref('')
@@ -24,11 +25,7 @@ function clearErrors() {
 }
 
 function getRedirectTarget() {
-  const redirect = route.query.redirect
-
-  return typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
-    ? redirect
-    : '/account'
+  return getSafeRedirectTarget(route.query.redirect)
 }
 
 async function submitForm() {
@@ -74,6 +71,7 @@ async function submitForm() {
             v-model.trim="email"
             type="email"
             autocomplete="email"
+            maxlength="254"
             :aria-describedby="fieldErrors.email ? 'login-email-error' : undefined"
             :aria-invalid="Boolean(fieldErrors.email)"
             required
@@ -89,6 +87,7 @@ async function submitForm() {
             v-model="password"
             type="password"
             autocomplete="current-password"
+            maxlength="64"
             :aria-describedby="fieldErrors.password ? 'login-password-error' : undefined"
             :aria-invalid="Boolean(fieldErrors.password)"
             required
