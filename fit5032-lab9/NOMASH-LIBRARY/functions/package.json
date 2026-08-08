@@ -1,0 +1,17 @@
+{
+  "name": "nomash-library-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore",
+    "seed": "node scripts/seed-emulator.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "firebase-admin": "^14.2.0",
+    "firebase-functions": "^7.3.2"
+  }
+}
