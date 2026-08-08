@@ -1,0 +1,22 @@
+[
+  {
+    "name": "The Great Gatsby",
+    "isbn": 9780743273565
+  },
+  {
+    "name": "To Kill a Mockingbird",
+    "isbn": 9780061120084
+  },
+  {
+    "name": "Nineteen Eighty-Four",
+    "isbn": 9780451524935
+  },
+  {
+    "name": "Pride and Prejudice",
+    "isbn": 9780141439518
+  },
+  {
+    "name": "The Hobbit",
+    "isbn": 9780547928227
+  }
+]
