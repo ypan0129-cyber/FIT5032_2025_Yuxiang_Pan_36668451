@@ -5,10 +5,14 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Download,
+  FileSpreadsheet,
+  FileText,
   Search,
   X,
 } from '@lucide/vue'
 import { computed, ref, useId, watch } from 'vue'
+import { downloadTableCsv, downloadTablePdf } from '../services/dataExport'
 import {
   filterTableRows,
   normalisePageSize,
@@ -45,6 +49,14 @@ const props = defineProps({
     type: String,
     default: 'No matching results.',
   },
+  exportFileName: {
+    type: String,
+    default: '',
+  },
+  exportTitle: {
+    type: String,
+    default: '',
+  },
 })
 
 const componentId = useId()
@@ -55,7 +67,15 @@ const sortKey = ref(props.initialSortKey)
 const sortDirection = ref('ascending')
 const currentPage = ref(1)
 const selectedPageSize = ref(normalisePageSize(props.initialPageSize))
+const isExportPanelOpen = ref(false)
+const isExporting = ref(false)
+const exportMessage = ref('')
+const exportError = ref('')
 
+const exportableColumns = computed(() =>
+  props.columns.filter((column) => column.exportable !== false),
+)
+const selectedExportColumnKeys = ref(exportableColumns.value.map((column) => column.key))
 const filteredRows = computed(() =>
   filterTableRows(props.rows, searchColumn.value, searchTerm.value),
 )
@@ -67,6 +87,12 @@ const pageResult = computed(() =>
 )
 const searchColumnLabel = computed(
   () => searchableColumns.value.find((column) => column.key === searchColumn.value)?.label || '',
+)
+const canExport = computed(
+  () =>
+    selectedExportColumnKeys.value.length > 0 &&
+    sortedRows.value.length > 0 &&
+    !isExporting.value,
 )
 
 watch([searchColumn, searchTerm, selectedPageSize], () => {
@@ -117,6 +143,46 @@ function clearSearch() {
   searchTerm.value = ''
 }
 
+function toggleExportPanel() {
+  isExportPanelOpen.value = !isExportPanelOpen.value
+  exportMessage.value = ''
+  exportError.value = ''
+}
+
+async function exportTable(format) {
+  if (!canExport.value) {
+    return
+  }
+
+  isExporting.value = true
+  exportMessage.value = ''
+  exportError.value = ''
+
+  const exportOptions = {
+    rows: sortedRows.value,
+    columns: props.columns,
+    selectedColumnKeys: selectedExportColumnKeys.value,
+    fileName: props.exportFileName,
+  }
+
+  try {
+    if (format === 'csv') {
+      downloadTableCsv(exportOptions)
+    } else {
+      await downloadTablePdf({
+        ...exportOptions,
+        title: props.exportTitle || props.caption,
+      })
+    }
+
+    exportMessage.value = `${format.toUpperCase()} export downloaded.`
+  } catch {
+    exportError.value = `The ${format.toUpperCase()} export could not be created. Please try again.`
+  } finally {
+    isExporting.value = false
+  }
+}
+
 function displayValue(value) {
   return value === null || value === undefined || value === '' ? 'Not available' : value
 }
@@ -160,6 +226,71 @@ function displayValue(value) {
             <X :size="18" aria-hidden="true" />
           </button>
         </div>
+      </div>
+    </div>
+
+    <div v-if="exportFileName" class="data-table__export">
+      <button
+        class="button button--secondary"
+        type="button"
+        :aria-expanded="isExportPanelOpen"
+        :aria-controls="`${componentId}-export-panel`"
+        @click="toggleExportPanel"
+      >
+        <Download :size="18" aria-hidden="true" />
+        Export current results
+      </button>
+
+      <div
+        v-if="isExportPanelOpen"
+        :id="`${componentId}-export-panel`"
+        class="data-table__export-panel"
+      >
+        <fieldset>
+          <legend>Columns to export</legend>
+          <label v-for="column in exportableColumns" :key="column.key">
+            <input
+              v-model="selectedExportColumnKeys"
+              type="checkbox"
+              :value="column.key"
+            />
+            <span>{{ column.exportLabel || column.label }}</span>
+          </label>
+        </fieldset>
+
+        <div class="data-table__export-summary">
+          <p>{{ sortedRows.length }} {{ sortedRows.length === 1 ? 'row' : 'rows' }}</p>
+          <div>
+            <button
+              class="button button--secondary"
+              type="button"
+              :disabled="!canExport"
+              @click="exportTable('csv')"
+            >
+              <FileSpreadsheet :size="18" aria-hidden="true" />
+              CSV
+            </button>
+            <button
+              class="button button--primary"
+              type="button"
+              :disabled="!canExport"
+              @click="exportTable('pdf')"
+            >
+              <FileText :size="18" aria-hidden="true" />
+              {{ isExporting ? 'Creating...' : 'PDF' }}
+            </button>
+          </div>
+        </div>
+
+        <p v-if="!selectedExportColumnKeys.length" class="data-table__export-error">
+          Select at least one column.
+        </p>
+        <p v-if="exportMessage" class="data-table__export-message" role="status">
+          {{ exportMessage }}
+        </p>
+        <p v-if="exportError" class="data-table__export-error" role="alert">
+          {{ exportError }}
+        </p>
       </div>
     </div>
 
@@ -341,6 +472,90 @@ function displayValue(value) {
   color: var(--colour-primary-dark);
 }
 
+.data-table__export {
+  margin-bottom: 20px;
+}
+
+.data-table__export-panel {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.data-table__export-panel fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.data-table__export-panel legend {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 0;
+  color: var(--colour-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.data-table__export-panel label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 0.88rem;
+}
+
+.data-table__export-panel input {
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  accent-color: var(--colour-primary);
+}
+
+.data-table__export-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--colour-border);
+}
+
+.data-table__export-summary p,
+.data-table__export-message,
+.data-table__export-error {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.data-table__export-summary p {
+  color: var(--colour-muted);
+}
+
+.data-table__export-summary > div {
+  display: flex;
+  gap: 10px;
+}
+
+.data-table__export-message,
+.data-table__export-error {
+  margin-top: 12px;
+}
+
+.data-table__export-message {
+  color: var(--colour-primary-dark);
+}
+
+.data-table__export-error {
+  color: #8f2f2f;
+}
+
 .data-table__scroll {
   overflow-x: auto;
   border: 1px solid var(--colour-border);
@@ -467,6 +682,11 @@ tbody tr:hover {
     width: 100%;
     flex-wrap: wrap;
   }
+
+  .data-table__export-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
@@ -476,6 +696,11 @@ tbody tr:hover {
 
   .data-table__pagination {
     justify-content: space-between;
+  }
+
+  .data-table__export-summary > div,
+  .data-table__export-summary .button {
+    width: 100%;
   }
 }
 </style>

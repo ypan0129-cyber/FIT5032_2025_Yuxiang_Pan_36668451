@@ -12,8 +12,18 @@ const hasLoaded = ref(false)
 const summaryColumns = [
   { key: 'title', label: 'Service', searchable: true },
   { key: 'category', label: 'Concern', searchable: true },
-  { key: 'averageScore', label: 'Average score', align: 'right' },
-  { key: 'ratingCount', label: 'Ratings', align: 'right' },
+  {
+    key: 'averageScore',
+    label: 'Average score',
+    align: 'right',
+    exportValue: (row) => formatAverage(row),
+  },
+  {
+    key: 'ratingCount',
+    label: 'Ratings',
+    align: 'right',
+    exportValue: (row) => formatRatingCount(row),
+  },
 ]
 
 const failedCount = computed(
@@ -153,6 +163,8 @@ onMounted(refreshSummaries)
         caption="Member rating summaries for mental health resources"
         initial-sort-key="title"
         empty-message="No rating summaries match this table search."
+        export-file-name="silverlink-rating-summaries"
+        export-title="SilverLink Health Rating Summaries"
       >
         <template #cell-title="{ row }">
           <RouterLink class="text-link" :to="`/resources/${row.id}`">

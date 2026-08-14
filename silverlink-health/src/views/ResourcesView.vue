@@ -149,6 +149,8 @@ function clearFilters() {
         caption="Comparison of SilverLink Health support services"
         initial-sort-key="title"
         empty-message="No services match this table search."
+        export-file-name="silverlink-service-comparison"
+        export-title="SilverLink Health Service Comparison"
       >
         <template #cell-title="{ row }">
           <RouterLink class="text-link" :to="`/resources/${row.id}`">
