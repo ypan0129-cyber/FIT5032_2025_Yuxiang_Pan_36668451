@@ -10,10 +10,11 @@ a Firestore profile with the fixed `member` role, while repeat sign-ins reuse th
 existing profile without overwriting its role or name. The login, registration
 and account pages now expose the provider workflow and sign-in method.
 
-The implementation and local checks are complete. Production verification is
-still pending because this checkout does not contain `.env.local`; Google must
-also be enabled and its domains authorised in the Firebase console before the
-real popup, repeat sign-in and protected-route workflows can be exercised.
+The implementation and configured Firebase workflow have been verified. Google
+is enabled for the project, `localhost` is authorised for local testing, and
+first sign-in, repeat sign-in, sign-out, fixed-role profile creation and protected
+account access all complete successfully. The local `.env.local` remains ignored
+by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -169,8 +170,8 @@ when a later stage is finished.
 
 ### A3 Stage 1 — Google provider authentication
 
-**Planned commit message:** `feat(auth): add Google provider authentication`
-**Status:** Implemented and verified locally; Firebase provider configuration and production workflow verification remain pending.
+**Git checkpoints:** `dca6644` — `feat(auth): add Google provider authentication`; `9100487` — `fix(auth): allow Google sign-in loader in CSP`
+**Status:** Committed, pushed to `origin/main` and verified with the configured Firebase project.
 
 - Added reusable Google popup sign-in controls to the login and registration
   pages while preserving the Email/Password workflow and safe redirects.
@@ -181,9 +182,12 @@ when a later stage is finished.
 - Shows the Firebase sign-in method on the protected account page.
 - Added focused provider-profile and Firestore role-boundary tests. No Firebase
   configuration or secrets are stored in the repository.
-- Verification completed: 19 automated tests passed, the production build
-  passed, `npm audit --omit=dev` and `git diff --check` passed, and desktop/mobile
-  browser checks found no horizontal overflow or console errors.
+- Updated the Content Security Policy to allow Firebase's exact Google API
+  script origin while retaining the existing restrictive default policy.
+- Verification completed: 20 automated tests and the production build passed;
+  desktop/mobile layout checks passed; and first and repeat Google sign-in,
+  fixed `member` profile creation, sign-in method display, sign-out and protected
+  account access succeeded against the configured Firebase project.
 
 ### Later stages and submissions
 
