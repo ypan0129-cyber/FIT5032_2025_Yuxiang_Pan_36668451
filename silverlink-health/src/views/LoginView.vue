@@ -3,6 +3,7 @@ import { LogIn } from '@lucide/vue'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAuthErrorMessage, signIn } from '../auth'
+import GoogleSignInButton from '../components/GoogleSignInButton.vue'
 import { isFirebaseConfigured } from '../firebase'
 import { validateLogin } from '../utils/authValidation'
 import { getSafeRedirectTarget } from '../utils/security'
@@ -11,6 +12,7 @@ const email = ref('')
 const password = ref('')
 const formError = ref('')
 const isSubmitting = ref(false)
+const isGoogleSigningIn = ref(false)
 const fieldErrors = reactive({
   email: '',
   password: '',
@@ -49,6 +51,16 @@ async function submitForm() {
     isSubmitting.value = false
   }
 }
+
+async function handleGoogleSuccess() {
+  clearErrors()
+  await router.replace(getRedirectTarget())
+}
+
+function handleGoogleError(error) {
+  clearErrors()
+  formError.value = getAuthErrorMessage(error)
+}
 </script>
 
 <template>
@@ -60,10 +72,22 @@ async function submitForm() {
         <p>Access your saved account and resource ratings.</p>
       </div>
 
+      <p v-if="!isFirebaseConfigured" class="form-notice form-notice--error" role="alert">
+        Account access is not configured for this environment.
+      </p>
+
+      <GoogleSignInButton
+        :disabled="isSubmitting || !isFirebaseConfigured"
+        @busy-change="isGoogleSigningIn = $event"
+        @error="handleGoogleError"
+        @success="handleGoogleSuccess"
+      />
+
+      <div class="auth-divider" role="separator" aria-label="Or use email and password">
+        <span>or use email and password</span>
+      </div>
+
       <form class="form-stack" novalidate @submit.prevent="submitForm">
-        <p v-if="!isFirebaseConfigured" class="form-notice form-notice--error" role="alert">
-          Account access is not configured for this environment.
-        </p>
         <div class="form-field">
           <label for="login-email">Email address</label>
           <input
@@ -99,15 +123,16 @@ async function submitForm() {
         <button
           class="button button--primary button--full"
           type="submit"
-          :disabled="isSubmitting || !isFirebaseConfigured"
+          :disabled="isSubmitting || isGoogleSigningIn || !isFirebaseConfigured"
         >
           <LogIn :size="19" aria-hidden="true" />
           {{ isSubmitting ? 'Logging in...' : 'Log in' }}
         </button>
-        <p v-if="formError" class="form-notice form-notice--error" role="alert">
-          {{ formError }}
-        </p>
       </form>
+
+      <p v-if="formError" class="form-notice form-notice--error auth-error" role="alert">
+        {{ formError }}
+      </p>
 
       <p class="auth-panel__switch">
         New to SilverLink Health?

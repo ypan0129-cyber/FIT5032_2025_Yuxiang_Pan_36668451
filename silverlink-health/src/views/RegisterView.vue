@@ -3,6 +3,7 @@ import { UserPlus } from '@lucide/vue'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuthErrorMessage, registerMember } from '../auth'
+import GoogleSignInButton from '../components/GoogleSignInButton.vue'
 import { isFirebaseConfigured } from '../firebase'
 import { normaliseDisplayName, validateRegistration } from '../utils/authValidation'
 
@@ -20,6 +21,7 @@ const fieldErrors = reactive({
 })
 const formError = ref('')
 const isSubmitting = ref(false)
+const isGoogleSigningIn = ref(false)
 const router = useRouter()
 
 function clearErrors() {
@@ -54,6 +56,16 @@ async function submitForm() {
     isSubmitting.value = false
   }
 }
+
+async function handleGoogleSuccess() {
+  clearErrors()
+  await router.replace('/account')
+}
+
+function handleGoogleError(error) {
+  clearErrors()
+  formError.value = getAuthErrorMessage(error)
+}
 </script>
 
 <template>
@@ -65,10 +77,22 @@ async function submitForm() {
         <p>Register to rate services and keep track of your feedback.</p>
       </div>
 
+      <p v-if="!isFirebaseConfigured" class="form-notice form-notice--error" role="alert">
+        Account access is not configured for this environment.
+      </p>
+
+      <GoogleSignInButton
+        :disabled="isSubmitting || !isFirebaseConfigured"
+        @busy-change="isGoogleSigningIn = $event"
+        @error="handleGoogleError"
+        @success="handleGoogleSuccess"
+      />
+
+      <div class="auth-divider" role="separator" aria-label="Or create an account with email">
+        <span>or create an account with email</span>
+      </div>
+
       <form class="form-stack" novalidate @submit.prevent="submitForm">
-        <p v-if="!isFirebaseConfigured" class="form-notice form-notice--error" role="alert">
-          Account access is not configured for this environment.
-        </p>
         <div class="form-field">
           <label for="register-name">Full name</label>
           <input
@@ -143,15 +167,16 @@ async function submitForm() {
         <button
           class="button button--primary button--full"
           type="submit"
-          :disabled="isSubmitting || !isFirebaseConfigured"
+          :disabled="isSubmitting || isGoogleSigningIn || !isFirebaseConfigured"
         >
           <UserPlus :size="19" aria-hidden="true" />
           {{ isSubmitting ? 'Creating account...' : 'Create account' }}
         </button>
-        <p v-if="formError" class="form-notice form-notice--error" role="alert">
-          {{ formError }}
-        </p>
       </form>
+
+      <p v-if="formError" class="form-notice form-notice--error auth-error" role="alert">
+        {{ formError }}
+      </p>
 
       <p class="auth-panel__switch">
         Already have an account?

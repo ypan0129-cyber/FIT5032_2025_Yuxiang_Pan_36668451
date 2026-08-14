@@ -4,7 +4,16 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-Stage 4 completes the A2 security hardening for business requirement C.4. It adds plain-text input checks, safe same-origin login redirects, a Content Security Policy, browser security headers and automated checks for unsafe HTML rendering. The matching Firestore rule change has been published to the `sliverlink-health` project.
+A3 Stage 1 implements business requirement D.1 with Google Authentication in
+addition to the existing Email/Password workflow. A first-time Google user gets
+a Firestore profile with the fixed `member` role, while repeat sign-ins reuse the
+existing profile without overwriting its role or name. The login, registration
+and account pages now expose the provider workflow and sign-in method.
+
+The implementation and local checks are complete. Production verification is
+still pending because this checkout does not contain `.env.local`; Google must
+also be enabled and its domains authorised in the Firebase console before the
+real popup, repeat sign-in and protected-route workflows can be exercised.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -15,9 +24,15 @@ The public directory still reads its six service records from the local JavaScri
 1. Copy `.env.example` to `.env.local`.
 2. Add the Firebase Web app configuration for the `sliverlink-health` project to `.env.local`.
 3. Enable **Authentication → Sign-in method → Email/Password**.
-4. Create a Cloud Firestore database in production mode. This project uses the Sydney region (`australia-southeast1`).
-5. Publish `firestore.rules` in the Firebase console, or deploy it with `npx firebase-tools deploy --only firestore:rules`.
-6. To create a staff account, register a normal member, locate its UID in Firebase Authentication, open the matching `users/{uid}` document, and change only the `role` field from `member` to `staff`. Refresh or sign in again before testing `/staff`.
+4. Enable **Authentication → Sign-in method → Google**, select a project
+   support email and save the provider configuration.
+5. Under **Authentication → Settings → Authorised domains**, add every host
+   used for the application. Add `localhost` when it is needed for local popup
+   testing and add the Firebase Hosting or custom production domain before
+   deployment.
+6. Create a Cloud Firestore database in production mode. This project uses the Sydney region (`australia-southeast1`).
+7. Publish `firestore.rules` in the Firebase console, or deploy it with `npx firebase-tools deploy --only firestore:rules`.
+8. To create a staff account, register a normal member, locate its UID in Firebase Authentication, open the matching `users/{uid}` document, and change only the `role` field from `member` to `staff`. Refresh or sign in again before testing `/staff`.
 
 The real `.env.local` file is ignored by Git. Never add a Firebase service-account private key to this repository. Firebase Web configuration values are client configuration; access control is enforced by Authentication and Firestore Security Rules.
 
@@ -119,8 +134,8 @@ when a later stage is finished.
 
 ### Stage 4 — Application security hardening
 
-**Planned commit message:** `feat: add application security protections`
-**Status:** Implementation and Firestore Rules publication complete; awaiting the user's commit and push.
+**Git checkpoint:** [`ee08535`](https://github.com/ypan0129-cyber/FIT5032_2025_Yuxiang_Pan_36668451/commit/ee08535) — `feat: add application security protections`
+**Status:** Committed and pushed to `origin/main`.
 
 - Added a plain-text validation boundary for profile names and mirrored the
   restriction in Firestore Security Rules.
@@ -139,6 +154,36 @@ when a later stage is finished.
   rejected plain text, with no script dialog or Content Security Policy errors.
 - Verification completed: 14 automated tests passed, the production build passed,
   `npm audit --omit=dev` found no vulnerabilities, and `git diff --check` passed.
+
+### A3 Stage 0 — Secure implementation baseline
+
+**Git checkpoint:** [`387a758`](https://github.com/ypan0129-cyber/FIT5032_2025_Yuxiang_Pan_36668451/commit/387a758) — `chore(a3): establish secure implementation baseline`
+**Status:** Committed and pushed to `origin/main`.
+
+- Added the A3 requirements and evidence matrix with staged D–F delivery gates.
+- Recorded the planned reviewable commit sequence for later A3 work.
+- Updated vulnerable transitive build dependencies without changing the runtime
+  application behavior.
+- Verification completed: the existing 14 automated tests and production build
+  passed, and `npm audit --omit=dev` found no vulnerabilities.
+
+### A3 Stage 1 — Google provider authentication
+
+**Planned commit message:** `feat(auth): add Google provider authentication`
+**Status:** Implemented and verified locally; Firebase provider configuration and production workflow verification remain pending.
+
+- Added reusable Google popup sign-in controls to the login and registration
+  pages while preserving the Email/Password workflow and safe redirects.
+- Creates a fixed-role `member` profile for first-time provider users and reads,
+  rather than overwrites, an existing profile on repeat sign-in.
+- Rejects unsafe provider display names and falls back to a valid email-derived
+  or application display name.
+- Shows the Firebase sign-in method on the protected account page.
+- Added focused provider-profile and Firestore role-boundary tests. No Firebase
+  configuration or secrets are stored in the repository.
+- Verification completed: 19 automated tests passed, the production build
+  passed, `npm audit --omit=dev` and `git diff --check` passed, and desktop/mobile
+  browser checks found no horizontal overflow or console errors.
 
 ### Later stages and submissions
 

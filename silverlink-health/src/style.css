@@ -770,6 +770,48 @@ p {
   gap: 20px;
 }
 
+.button--provider {
+  border: 1px solid var(--colour-border);
+  background: #ffffff;
+  color: var(--colour-heading);
+}
+
+.form-notice + .button--provider {
+  margin-top: 22px;
+}
+
+.button--provider:hover {
+  border-color: var(--colour-primary);
+  background: var(--colour-primary-light);
+  color: var(--colour-primary-dark);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--colour-muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--colour-border);
+  content: '';
+}
+
+.auth-divider span {
+  max-width: 220px;
+}
+
+.auth-error {
+  margin-top: 20px;
+}
+
 .field-hint {
   margin: 6px 0 0;
   color: var(--colour-muted);

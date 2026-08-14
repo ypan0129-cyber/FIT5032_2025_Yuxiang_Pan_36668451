@@ -3,15 +3,18 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   deleteUser,
+  GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { isFirebaseConfigured, requireFirebase } from './firebase'
 import { normaliseDisplayName } from './utils/authValidation'
+import { createProviderMemberProfile } from './utils/providerProfile'
 
 const state = reactive({
   user: null,
@@ -21,6 +24,9 @@ const state = reactive({
 })
 
 let initialisePromise
+const googleProvider = new GoogleAuthProvider()
+
+googleProvider.setCustomParameters({ prompt: 'select_account' })
 
 async function loadProfile(user, db) {
   const snapshot = await getDoc(doc(db, 'users', user.uid))
@@ -28,6 +34,29 @@ async function loadProfile(user, db) {
   state.profileError = snapshot.exists()
     ? ''
     : 'Your account profile could not be found. Please contact support.'
+}
+
+async function loadOrCreateProviderProfile(user, db) {
+  const profileReference = doc(db, 'users', user.uid)
+  const snapshot = await getDoc(profileReference)
+
+  if (snapshot.exists()) {
+    state.profile = { id: snapshot.id, ...snapshot.data() }
+    state.profileError = ''
+    return state.profile
+  }
+
+  const profile = createProviderMemberProfile(user, serverTimestamp())
+  await setDoc(profileReference, profile)
+
+  state.profile = {
+    id: user.uid,
+    displayName: profile.displayName,
+    role: profile.role,
+  }
+  state.profileError = ''
+
+  return state.profile
 }
 
 export async function refreshProfile() {
@@ -155,6 +184,34 @@ export async function signIn(email, password) {
   return credential.user
 }
 
+export async function signInWithGoogle() {
+  const { auth, db } = requireFirebase()
+  let signedInUser
+
+  try {
+    const credential = await signInWithPopup(auth, googleProvider)
+    signedInUser = credential.user
+    state.user = signedInUser
+    await loadOrCreateProviderProfile(signedInUser, db)
+
+    return signedInUser
+  } catch (error) {
+    if (signedInUser) {
+      try {
+        await firebaseSignOut(auth)
+      } catch {
+        // Keep the original profile error so the failed sign-in remains diagnosable.
+      }
+
+      state.user = null
+      state.profile = null
+      state.profileError = ''
+    }
+
+    throw error
+  }
+}
+
 export async function signOut() {
   const { auth } = requireFirebase()
   await firebaseSignOut(auth)
@@ -166,11 +223,19 @@ export async function signOut() {
 export function getAuthErrorMessage(error) {
   const messages = {
     'auth/email-already-in-use': 'An account already uses this email address.',
+    'auth/account-exists-with-different-credential':
+      'This email already uses another sign-in method. Log in with that method first.',
+    'auth/cancelled-popup-request': 'The Google sign-in request was cancelled.',
     'auth/invalid-credential': 'The email address or password is incorrect.',
     'auth/invalid-email': 'Enter a valid email address.',
     'auth/network-request-failed': 'The network request failed. Check your connection and try again.',
-    'auth/operation-not-allowed': 'Email and password sign-in is not enabled yet.',
+    'auth/operation-not-allowed': 'This sign-in method is not enabled yet.',
+    'auth/operation-not-supported-in-this-environment':
+      'Google sign-in is not supported in this browser environment.',
+    'auth/popup-blocked': 'The Google sign-in window was blocked. Allow pop-ups and try again.',
+    'auth/popup-closed-by-user': 'Google sign-in was closed before it finished.',
     'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.',
+    'auth/unauthorized-domain': 'This website is not authorised for Google sign-in.',
     'auth/user-disabled': 'This account has been disabled. Please contact support.',
     'auth/weak-password': 'Choose a stronger password with at least 8 characters.',
     'permission-denied': 'Your account profile could not be created. Please contact support.',

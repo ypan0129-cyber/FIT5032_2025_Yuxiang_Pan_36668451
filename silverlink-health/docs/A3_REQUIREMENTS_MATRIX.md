@@ -16,16 +16,16 @@ required manual configuration have been verified.
 
 ## D-class requirements
 
-| Requirement | Acceptance evidence | Baseline status | Planned stage | Implementation evidence | Verification evidence |
+| Requirement | Acceptance evidence | Current status | Planned stage | Implementation evidence | Verification evidence |
 | --- | --- | --- | --- | --- | --- |
-| D.1 External authentication | Firebase Authentication supports a complete external-provider sign-in flow and creates a safe member profile for a first-time user. | Baseline present: Email/Password authentication is implemented, but this checkout has no local Firebase environment configuration. | Stage 1 | `src/auth.js`, `src/firebase.js`, `src/router/index.js`, provider sign-in UI and profile tests | Successful provider sign-in, repeat sign-in, sign-out and protected-route checks in the configured Firebase project |
+| D.1 External authentication | Firebase Authentication supports a complete external-provider sign-in flow and creates a safe member profile for a first-time user. | Implemented locally: Google popup authentication, safe fixed-role profile creation and account method display are complete. Firebase provider/domain configuration and live workflow verification remain pending. | Stage 1 | `src/auth.js`, `src/components/GoogleSignInButton.vue`, `src/utils/providerProfile.js`, login/register/account views and `tests/providerProfile.test.js` | Local automated tests and desktop/mobile layout checks; successful first/repeat provider sign-in, sign-out and protected-route checks remain pending in the configured Firebase project |
 | D.2 Email with attachment | An authenticated member can send a support-plan email with a generated PDF attachment to the email address verified by Firebase Authentication. | Planned | Stage 5 | Authenticated Firebase callable function, email provider integration, PDF generation and account-page workflow | Function tests plus receipt of the email and readable attachment in the configured test account |
 | D.3 Interactive tables | Two tables support sorting, single-column search and pagination, with no page size above 10 rows. | Planned | Stage 2 | Reusable accessible data-table component, public service comparison table and staff rating-summary table | Component tests and desktop/mobile keyboard checks covering sort, search, page changes and the 10-row limit |
 | D.4 Public cloud deployment | The complete application, SPA routes, Firestore rules and serverless functions are available at a public production URL. | Planned: `firebase.json` currently configures Firestore only. | Stage 11 | Firebase Hosting configuration, SPA and API rewrites, production security headers and deployment documentation | Public URL, deployment output and production smoke-test record |
 
 ## E-class requirements
 
-| Requirement | Acceptance evidence | Baseline status | Planned stage | Implementation evidence | Verification evidence |
+| Requirement | Acceptance evidence | Current status | Planned stage | Implementation evidence | Verification evidence |
 | --- | --- | --- | --- | --- | --- |
 | E.1 Serverless function | Firebase Functions executes authenticated server-side business logic that cannot safely run in the browser. | Planned | Stage 5 | Support-plan email function, server-side validation, secret management and abuse controls | Function unit/integration tests and a successful deployed invocation |
 | E.2 Geolocation | A map provides at least two practical capabilities: finding nearby services from a suburb/postcode or current location, and route planning with distance and estimated time. | Planned | Stage 4 | Map page, geocoding/location service, distance ranking, route service and accessible list alternative | Browser checks for successful, denied-permission, no-result and network-error paths |

@@ -3,6 +3,7 @@ import { LogOut, ShieldCheck, UserRound } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuthErrorMessage, signOut, useAuth } from '../auth'
+import { getSignInMethodLabel } from '../utils/providerProfile'
 
 const authState = useAuth()
 const router = useRouter()
@@ -12,6 +13,7 @@ const signOutError = ref('')
 const displayName = computed(
   () => authState.profile?.displayName || authState.user?.displayName || 'Account holder',
 )
+const signInMethod = computed(() => getSignInMethodLabel(authState.user?.providerData))
 const isStaff = computed(() => authState.profile?.role === 'staff')
 const accountTypeLabel = computed(() => {
   if (authState.profile?.role === 'staff') return 'Staff account'
@@ -70,6 +72,10 @@ async function handleSignOut() {
           <div>
             <dt>Account role</dt>
             <dd><span class="role-badge">{{ roleLabel }}</span></dd>
+          </div>
+          <div>
+            <dt>Sign-in method</dt>
+            <dd>{{ signInMethod }}</dd>
           </div>
         </dl>
 
