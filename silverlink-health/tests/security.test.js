@@ -33,3 +33,14 @@ test('application source avoids direct HTML injection APIs', async () => {
 
   assert.doesNotMatch(source, /\bv-html\b|\.innerHTML\b|insertAdjacentHTML/u)
 })
+
+test('development and document CSP allow the Google authentication loader', async () => {
+  const [indexHtml, viteConfig] = await Promise.all([
+    readFile(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8'),
+    readFile(fileURLToPath(new URL('../vite.config.js', import.meta.url)), 'utf8'),
+  ])
+  const googleLoaderSource = /script-src 'self' https:\/\/apis\.google\.com/u
+
+  assert.match(indexHtml, googleLoaderSource)
+  assert.match(viteConfig, googleLoaderSource)
+})

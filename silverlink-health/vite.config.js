@@ -11,7 +11,7 @@ const contentSecurityPolicy = [
   "frame-src 'self' https://*.firebaseapp.com",
   "img-src 'self' data:",
   "object-src 'none'",
-  "script-src 'self'",
+  "script-src 'self' https://apis.google.com",
   "style-src 'self' 'unsafe-inline'",
   "worker-src 'self' blob:",
 ].join('; ')
