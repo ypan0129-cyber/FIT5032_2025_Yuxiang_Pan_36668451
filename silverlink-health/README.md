@@ -4,14 +4,15 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 3 implements business requirement E.4. Both interactive tables can
-export their current filtered and sorted result set as CSV or PDF. Users choose
-the public columns to include, while internal identifiers remain excluded. CSV
-content is protected against spreadsheet formula injection, and the PDF module
-loads only when an export is requested.
+A3 Stage 4 implements business requirement E.2. The nearby-services page can
+find an Australian start point from a suburb or postcode, or request the
+browser's current location. It ranks six Melbourne public mental-health access
+points by distance and can display a driving route, distance and estimated time
+to a selected service on an interactive Leaflet map. The same information
+remains available through an accessible service list and route summary.
 
-Stage 1 Google Authentication and Stage 2 interactive tables remain configured
-and verified. The local `.env.local` remains ignored by Git.
+Stages 1-3 remain configured and verified. The local `.env.local` remains
+ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -221,6 +222,25 @@ when a later stage is finished.
   `npm audit --omit=dev` found no vulnerabilities, browser checks covered both
   file types and both tables, and a generated PDF passed visual rendering and
   text extraction checks without clipping or missing content.
+
+### A3 Stage 4 — Nearby service search and route planning
+
+**Git checkpoint:** `da09711` — `feat(map): add nearby service search and route planning`
+**Status:** Committed, pushed to `origin/main` and verified on desktop and mobile.
+
+- Added a `/nearby` workflow with an interactive Leaflet/OpenStreetMap map and
+  an accessible list of six Melbourne public mental-health access points.
+- Added Australian suburb/postcode geocoding and optional browser geolocation,
+  then ranked services by great-circle distance from the selected start point.
+- Added OSRM driving routes with a map polyline, distance, estimated drive time
+  and a protected external directions link.
+- Added explicit CSP and browser-permission policy entries for map tiles,
+  geocoding, routing and same-origin geolocation.
+- Verification completed: 37 automated tests, the production build,
+  `npm audit --omit=dev` and `git diff --check` passed. Live Nominatim and OSRM
+  requests succeeded, and browser checks covered route rendering, distance
+  sorting, no-result handling, denied-location fallback, an error-free console
+  and a 390 x 844 mobile layout without horizontal overflow.
 
 ### Later stages and submissions
 
