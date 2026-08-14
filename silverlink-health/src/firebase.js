@@ -1,6 +1,7 @@
 import { getApps, initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,11 +24,18 @@ const firebaseApp = isFirebaseConfigured
 
 export const auth = firebaseApp ? getAuth(firebaseApp) : null
 export const db = firebaseApp ? getFirestore(firebaseApp) : null
+export const functions = firebaseApp
+  ? getFunctions(firebaseApp, 'australia-southeast1')
+  : null
+
+if (functions && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true') {
+  connectFunctionsEmulator(functions, '127.0.0.1', 5001)
+}
 
 export function requireFirebase() {
   if (!auth || !db) {
     throw new Error('Firebase is not configured for this environment.')
   }
 
-  return { auth, db }
+  return { auth, db, functions }
 }

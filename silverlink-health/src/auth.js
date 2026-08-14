@@ -5,7 +5,9 @@ import {
   deleteUser,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reload,
   setPersistence,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -220,6 +222,29 @@ export async function signOut() {
   state.profileError = ''
 }
 
+export async function sendAccountVerificationEmail() {
+  const { auth } = requireFirebase()
+
+  if (!auth.currentUser) {
+    throw new Error('No signed-in account is available.')
+  }
+
+  await sendEmailVerification(auth.currentUser)
+}
+
+export async function refreshCurrentUser() {
+  const { auth } = requireFirebase()
+
+  if (!auth.currentUser) {
+    return null
+  }
+
+  await reload(auth.currentUser)
+  await auth.currentUser.getIdToken(true)
+  state.user = auth.currentUser
+  return state.user
+}
+
 export function getAuthErrorMessage(error) {
   const messages = {
     'auth/email-already-in-use': 'An account already uses this email address.',
@@ -232,6 +257,7 @@ export function getAuthErrorMessage(error) {
     'auth/operation-not-allowed': 'This sign-in method is not enabled yet.',
     'auth/operation-not-supported-in-this-environment':
       'Google sign-in is not supported in this browser environment.',
+    'auth/requires-recent-login': 'Sign in again before changing this account setting.',
     'auth/popup-blocked': 'The Google sign-in window was blocked. Allow pop-ups and try again.',
     'auth/popup-closed-by-user': 'Google sign-in was closed before it finished.',
     'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.',
@@ -240,6 +266,12 @@ export function getAuthErrorMessage(error) {
     'auth/weak-password': 'Choose a stronger password with at least 8 characters.',
     'permission-denied': 'Your account profile could not be created. Please contact support.',
     'firestore/permission-denied': 'Your account profile could not be created. Please contact support.',
+    'functions/failed-precondition': 'Verify your email address before sending a support plan.',
+    'functions/invalid-argument': 'Check the support plan fields and try again.',
+    'functions/permission-denied': 'This account cannot send a support plan.',
+    'functions/resource-exhausted': 'Please wait before sending another support plan email.',
+    'functions/unavailable': 'The email service is temporarily unavailable. Try again later.',
+    'functions/internal': 'The support plan could not be sent. Try again later.',
   }
 
   if (error?.message === 'Firebase is not configured for this environment.') {

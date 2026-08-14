@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
-  "connect-src 'self' ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://nominatim.openstreetmap.org https://router.project-osrm.org",
+  "connect-src 'self' http://localhost:5001 http://127.0.0.1:5001 ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://australia-southeast1-sliverlink-health.cloudfunctions.net https://nominatim.openstreetmap.org https://router.project-osrm.org",
   "font-src 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",

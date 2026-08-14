@@ -59,6 +59,9 @@ watch(
           <RouterLink to="/">Home</RouterLink>
           <RouterLink to="/resources">Resources</RouterLink>
           <RouterLink to="/nearby">Nearby services</RouterLink>
+          <RouterLink v-if="authState.profile?.role === 'member'" to="/support-plan">
+            Support plan
+          </RouterLink>
           <RouterLink v-if="authState.profile?.role === 'staff'" to="/staff">Staff</RouterLink>
         </div>
         <div class="primary-navigation__actions">

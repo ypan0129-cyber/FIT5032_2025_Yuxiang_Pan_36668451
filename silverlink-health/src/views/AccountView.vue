@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuthErrorMessage, signOut, useAuth } from '../auth'
 import { getSignInMethodLabel } from '../utils/providerProfile'
+import EmailVerificationPanel from '../components/EmailVerificationPanel.vue'
 
 const authState = useAuth()
 const router = useRouter()
@@ -82,6 +83,8 @@ async function handleSignOut() {
         <p v-if="authState.profileError" class="form-notice form-notice--error" role="alert">
           {{ authState.profileError }}
         </p>
+
+        <EmailVerificationPanel v-if="!isStaff" />
 
         <button
           class="button button--secondary"

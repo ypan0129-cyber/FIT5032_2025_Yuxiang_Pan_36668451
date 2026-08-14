@@ -10,6 +10,7 @@ import RegisterView from '../views/RegisterView.vue'
 import ResourceDetailView from '../views/ResourceDetailView.vue'
 import ResourcesView from '../views/ResourcesView.vue'
 import StaffView from '../views/StaffView.vue'
+import SupportPlanView from '../views/SupportPlanView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +30,12 @@ const router = createRouter({
       meta: { requiresGuest: true },
     },
     { path: '/account', name: 'account', component: AccountView, meta: { requiresAuth: true } },
+    {
+      path: '/support-plan',
+      name: 'support-plan',
+      component: SupportPlanView,
+      meta: { requiresAuth: true, requiredRole: 'member' },
+    },
     {
       path: '/staff',
       name: 'staff',
