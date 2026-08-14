@@ -1,11 +1,20 @@
 <script setup>
+import { RefreshCw } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
+import DataTable from '../components/DataTable.vue'
 import { getRatingSummary } from '../services/ratingService'
 import { resources } from '../data/resources'
 
 const summaries = ref({})
 const isRefreshing = ref(false)
 const hasLoaded = ref(false)
+
+const summaryColumns = [
+  { key: 'title', label: 'Service', searchable: true },
+  { key: 'category', label: 'Concern', searchable: true },
+  { key: 'averageScore', label: 'Average score', align: 'right' },
+  { key: 'ratingCount', label: 'Ratings', align: 'right' },
+]
 
 const failedCount = computed(
   () => Object.values(summaries.value).filter((summary) => summary.status === 'failed').length,
@@ -26,6 +35,13 @@ const statusMessage = computed(() => {
 
   return 'Rating summaries are up to date.'
 })
+
+const summaryRows = computed(() =>
+  resources.map((resource) => ({
+    ...resource,
+    ...getSummary(resource.id),
+  })),
+)
 
 function loadingSummary() {
   return {
@@ -122,6 +138,7 @@ onMounted(refreshSummaries)
           :disabled="isRefreshing"
           @click="refreshSummaries"
         >
+          <RefreshCw :size="18" :class="{ 'staff-refresh-icon--active': isRefreshing }" aria-hidden="true" />
           {{ isRefreshing ? 'Refreshing...' : 'Refresh summaries' }}
         </button>
       </div>
@@ -130,71 +147,43 @@ onMounted(refreshSummaries)
         {{ statusMessage }}
       </p>
 
-      <ul class="resource-grid staff-resource-list" aria-label="Mental health resources">
-        <li v-for="resource in resources" :key="resource.id" class="resource-card">
-          <p class="resource-card__category">{{ resource.category }}</p>
-          <h3 :id="`staff-resource-${resource.id}`">{{ resource.title }}</h3>
-
-          <dl class="staff-resource__facts">
-            <div>
-              <dt>Average score</dt>
-              <dd>{{ formatAverage(getSummary(resource.id)) }}</dd>
-            </div>
-            <div>
-              <dt>Ratings</dt>
-              <dd>{{ formatRatingCount(getSummary(resource.id)) }}</dd>
-            </div>
-          </dl>
-
-          <RouterLink class="text-link resource-card__link" :to="`/resources/${resource.id}`">
-            View resource
+      <DataTable
+        :rows="summaryRows"
+        :columns="summaryColumns"
+        caption="Member rating summaries for mental health resources"
+        initial-sort-key="title"
+        empty-message="No rating summaries match this table search."
+      >
+        <template #cell-title="{ row }">
+          <RouterLink class="text-link" :to="`/resources/${row.id}`">
+            {{ row.title }}
           </RouterLink>
-        </li>
-      </ul>
+        </template>
+        <template #cell-averageScore="{ row }">
+          {{ formatAverage(row) }}
+        </template>
+        <template #cell-ratingCount="{ row }">
+          {{ formatRatingCount(row) }}
+        </template>
+      </DataTable>
     </div>
   </section>
 </template>
 
 <style scoped>
-.staff-resource-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.staff-resource__facts {
-  margin: 4px 0 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--colour-border);
-}
-
-.staff-resource__facts > div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--colour-border);
-}
-
-.staff-resource__facts dt,
-.staff-resource__facts dd {
-  margin: 0;
-}
-
-.staff-resource__facts dt {
-  color: var(--colour-muted);
-  font-weight: 700;
-}
-
-.staff-resource__facts dd {
-  color: var(--colour-heading);
-  font-weight: 700;
-  text-align: right;
-}
-
 .staff-status {
   margin-top: -22px;
   color: var(--colour-muted);
+}
+
+.staff-refresh-icon--active {
+  animation: staff-refresh-spin 0.8s linear infinite;
+}
+
+@keyframes staff-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 575px) {
@@ -205,6 +194,12 @@ onMounted(refreshSummaries)
 
   .staff-status {
     margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-refresh-icon--active {
+    animation: none;
   }
 }
 </style>

@@ -1,12 +1,28 @@
 <script setup>
 import { Search, X } from '@lucide/vue'
 import { computed, ref } from 'vue'
+import DataTable from '../components/DataTable.vue'
 import ResourceCard from '../components/ResourceCard.vue'
 import { deliveryModes, resources, supportCategories } from '../data/resources'
 
 const searchTerm = ref('')
 const selectedCategory = ref('')
 const selectedMode = ref('')
+
+const comparisonColumns = [
+  { key: 'title', label: 'Service', searchable: true },
+  { key: 'category', label: 'Concern', searchable: true },
+  { key: 'supportMethods', label: 'Support methods', searchable: true },
+  { key: 'location', label: 'Location', searchable: true },
+  { key: 'openingHours', label: 'Availability', searchable: true },
+  { key: 'phone', label: 'Phone', searchable: true },
+]
+
+const comparisonRows = resources.map((resource) => ({
+  ...resource,
+  supportMethods: resource.deliveryModes.join(', '),
+  phone: resource.phone || 'Online only',
+}))
 
 const filteredResources = computed(() => {
   const query = searchTerm.value.trim().toLowerCase()
@@ -116,6 +132,30 @@ function clearFilters() {
           Clear filters
         </button>
       </div>
+    </div>
+  </section>
+
+  <section class="section section--muted" aria-labelledby="resource-comparison-title">
+    <div class="site-container">
+      <div class="section-heading">
+        <p class="eyebrow">Service comparison</p>
+        <h2 id="resource-comparison-title">Compare support options</h2>
+        <p>Compare contact methods, locations and availability across the directory.</p>
+      </div>
+
+      <DataTable
+        :rows="comparisonRows"
+        :columns="comparisonColumns"
+        caption="Comparison of SilverLink Health support services"
+        initial-sort-key="title"
+        empty-message="No services match this table search."
+      >
+        <template #cell-title="{ row }">
+          <RouterLink class="text-link" :to="`/resources/${row.id}`">
+            {{ row.title }}
+          </RouterLink>
+        </template>
+      </DataTable>
     </div>
   </section>
 </template>
