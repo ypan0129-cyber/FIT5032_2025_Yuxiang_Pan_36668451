@@ -4,17 +4,16 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 1 implements business requirement D.1 with Google Authentication in
-addition to the existing Email/Password workflow. A first-time Google user gets
-a Firestore profile with the fixed `member` role, while repeat sign-ins reuse the
-existing profile without overwriting its role or name. The login, registration
-and account pages now expose the provider workflow and sign-in method.
+A3 Stage 2 implements business requirement D.3 with a reusable accessible data
+table. The public resource directory now includes a service comparison table,
+and the protected staff area presents live rating summaries in the same
+interaction model. Both tables support sorting, search within one selected
+column, pagination and a page-size choice capped at 10 rows.
 
-The implementation and configured Firebase workflow have been verified. Google
-is enabled for the project, `localhost` is authorised for local testing, and
-first sign-in, repeat sign-in, sign-out, fixed-role profile creation and protected
-account access all complete successfully. The local `.env.local` remains ignored
-by Git.
+Stage 1 Google Authentication remains configured and verified. A first-time
+Google user receives a fixed `member` Firestore profile, while repeat sign-ins
+reuse that profile without overwriting its role or name. The local `.env.local`
+remains ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -188,6 +187,24 @@ when a later stage is finished.
   desktop/mobile layout checks passed; and first and repeat Google sign-in,
   fixed `member` profile creation, sign-in method display, sign-out and protected
   account access succeeded against the configured Firebase project.
+
+### A3 Stage 2 — Interactive data tables
+
+**Git checkpoint:** `f0cbb9d` — `feat(tables): add searchable sortable paginated data tables`
+**Status:** Committed, pushed to `origin/main` and verified on desktop and mobile.
+
+- Added a reusable accessible data-table component with explicit column
+  selection for search, sortable column headers and clear ascending/descending
+  state.
+- Added 5/10-row page-size controls and enforced the 10-row maximum in the data
+  utility layer, independent of the interface control.
+- Added a public service comparison table and replaced the staff summary cards
+  with a live rating-summary table while preserving refresh and failure states.
+- Kept wide tables inside labelled horizontal scroll regions so the page does
+  not overflow on narrow mobile viewports.
+- Verification completed: 24 automated tests and the production build passed,
+  `npm audit --omit=dev` found no vulnerabilities, and manual desktop/mobile
+  checks covered search, sort, pagination, refresh and console errors.
 
 ### Later stages and submissions
 
