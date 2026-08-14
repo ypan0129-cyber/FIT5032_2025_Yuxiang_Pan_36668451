@@ -4,16 +4,14 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 2 implements business requirement D.3 with a reusable accessible data
-table. The public resource directory now includes a service comparison table,
-and the protected staff area presents live rating summaries in the same
-interaction model. Both tables support sorting, search within one selected
-column, pagination and a page-size choice capped at 10 rows.
+A3 Stage 3 implements business requirement E.4. Both interactive tables can
+export their current filtered and sorted result set as CSV or PDF. Users choose
+the public columns to include, while internal identifiers remain excluded. CSV
+content is protected against spreadsheet formula injection, and the PDF module
+loads only when an export is requested.
 
-Stage 1 Google Authentication remains configured and verified. A first-time
-Google user receives a fixed `member` Firestore profile, while repeat sign-ins
-reuse that profile without overwriting its role or name. The local `.env.local`
-remains ignored by Git.
+Stage 1 Google Authentication and Stage 2 interactive tables remain configured
+and verified. The local `.env.local` remains ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -205,6 +203,24 @@ when a later stage is finished.
 - Verification completed: 24 automated tests and the production build passed,
   `npm audit --omit=dev` found no vulnerabilities, and manual desktop/mobile
   checks covered search, sort, pagination, refresh and console errors.
+
+### A3 Stage 3 — CSV and PDF data exports
+
+**Git checkpoint:** `76bfdd7` — `feat(export): add CSV and PDF data exports`
+**Status:** Committed, pushed to `origin/main` and verified on desktop and mobile.
+
+- Added reusable CSV and PDF export services that receive the table's complete
+  filtered and sorted result set rather than only the visible page.
+- Added explicit public-column selection and kept internal identifiers outside
+  export definitions on both the resource comparison and staff rating tables.
+- Escaped CSV punctuation, added spreadsheet formula-injection protection and
+  normalised download filenames.
+- Added a lazily loaded PDF generator with A4 orientation selection, table
+  headings, alternating row treatment, wrapping and page numbering.
+- Verification completed: 27 automated tests and the production build passed,
+  `npm audit --omit=dev` found no vulnerabilities, browser checks covered both
+  file types and both tables, and a generated PDF passed visual rendering and
+  text extraction checks without clipping or missing content.
 
 ### Later stages and submissions
 
