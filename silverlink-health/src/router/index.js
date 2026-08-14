@@ -4,6 +4,7 @@ import AccessDeniedView from '../views/AccessDeniedView.vue'
 import AccountView from '../views/AccountView.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import MapView from '../views/MapView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ResourceDetailView from '../views/ResourceDetailView.vue'
@@ -18,6 +19,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/resources', name: 'resources', component: ResourcesView },
+    { path: '/nearby', name: 'nearby', component: MapView },
     { path: '/resources/:id', name: 'resource-detail', component: ResourceDetailView },
     { path: '/login', name: 'login', component: LoginView, meta: { requiresGuest: true } },
     {

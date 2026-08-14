@@ -44,3 +44,19 @@ test('development and document CSP allow the Google authentication loader', asyn
   assert.match(indexHtml, googleLoaderSource)
   assert.match(viteConfig, googleLoaderSource)
 })
+
+test('map dependencies and browser location permission are explicitly allowed', async () => {
+  const [indexHtml, viteConfig] = await Promise.all([
+    readFile(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8'),
+    readFile(fileURLToPath(new URL('../vite.config.js', import.meta.url)), 'utf8'),
+  ])
+  const mapConnectionSources =
+    /https:\/\/nominatim\.openstreetmap\.org[\s\S]*https:\/\/router\.project-osrm\.org/u
+  const mapTileSource = /img-src[\s\S]*https:\/\/tile\.openstreetmap\.org/u
+
+  assert.match(indexHtml, mapConnectionSources)
+  assert.match(viteConfig, mapConnectionSources)
+  assert.match(indexHtml, mapTileSource)
+  assert.match(viteConfig, mapTileSource)
+  assert.match(viteConfig, /geolocation=\(self\)/u)
+})
