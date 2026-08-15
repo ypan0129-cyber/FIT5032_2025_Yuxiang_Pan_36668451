@@ -11,11 +11,10 @@ server verifies the Firebase ID token and Firestore role before querying only
 the fields needed for aggregate counts; it never returns user identifiers,
 contact details or individual ratings.
 
-Stages 1-6 are configured and verified. Stage 7 is implemented and tested
-locally, but remains pending until the updated function is deployed, a test
-account is assigned the `admin` role, and the production desktop/mobile workflow
-is checked. The local `.env.local`, cloud upload archives and all provider
-credentials remain ignored by Git.
+Stages 1-7 are configured and verified. The Stage 7 function is deployed, a
+separate account has the `admin` role, and the administrator, role-denial and
+responsive workflows have passed browser checks. The local `.env.local`, cloud
+upload archives and all provider credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -310,8 +309,8 @@ when a later stage is finished.
 
 ### A3 Stage 7 — Role-protected administrator dashboard
 
-**Git checkpoint:** `00f3a95` — `feat(admin): add role-protected administration dashboard`
-**Status:** Committed and tested locally; cloud deployment and browser verification pending.
+**Git checkpoints:** `00f3a95` — `feat(admin): add role-protected administration dashboard`; `71cdfe3` — `docs(admin): record Stage 7 local verification`
+**Status:** Committed, pushed to `origin/main` and verified against Firebase and Alibaba Cloud Function Compute.
 
 - Added the protected `POST /admin/metrics` Alibaba Cloud API route with
   Firebase ID-token verification and server-side `admin` role enforcement.
@@ -326,6 +325,12 @@ when a later stage is finished.
 - Local verification passed 55 frontend tests, 30 function tests, 6 Firestore
   emulator tests, Node.js 20 execution, the production build,
   zero-vulnerability production audits and `git diff --check`.
+- The deployed metrics route returned `204` for an allowed CORS preflight,
+  `401` without a Firebase ID token and `403` for an untrusted origin.
+- A configured administrator viewed and refreshed the dashboard successfully;
+  member and staff accounts were both denied access to `/admin`.
+- Desktop interaction and a `390 x 844` mobile check passed for navigation,
+  metric tiles, stacked activity sections and page overflow.
 
 ### Later stages and submissions
 
