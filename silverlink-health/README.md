@@ -4,17 +4,18 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 7 implements the administrator dashboard innovation in F.1. A separate
-`admin` role can open `/admin` and request system-level profile-role, rating and
-current email-dispatch metrics through the authenticated Alibaba Cloud API. The
-server verifies the Firebase ID token and Firestore role before querying only
-the fields needed for aggregate counts; it never returns user identifiers,
-contact details or individual ratings.
+A3 Stage 8 implements the public REST API innovation in F.1. Anonymous clients
+can list the six published support resources through `GET /api/v1/resources`
+and read a privacy-safe rating aggregate through
+`GET /api/v1/resources/{resourceId}/summary`. The versioned API allows
+cross-origin reads, uses short cache lifetimes and never returns user IDs,
+contact details, roles, individual scores or internal rating fields.
 
-Stages 1-7 are configured and verified. The Stage 7 function is deployed, a
-separate account has the `admin` role, and the administrator, role-denial and
-responsive workflows have passed browser checks. The local `.env.local`, cloud
-upload archives and all provider credentials remain ignored by Git.
+Stages 1-7 are configured and verified. Stage 8 is implemented and tested
+locally, with Alibaba Cloud deployment and production endpoint checks still
+pending. Its OpenAPI 3.1 contract is stored in `docs/openapi.json`. The local
+`.env.local`, cloud upload archives and all provider credentials remain ignored
+by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -24,9 +25,9 @@ document in the Firestore console. Staff accounts can access `/staff`, admin
 accounts can access `/admin`, and other roles are redirected to the generic
 access-denied page.
 
-The public directory still reads its six service records from the local
-JavaScript data structure. Ratings are stored privately at
-`resources/{resourceId}/ratings/{uid}`. Using the authenticated user ID as the
+The browser directory reads its six service records from the local JavaScript
+data structure, and the public API exposes the same published records. Ratings
+are stored privately at `resources/{resourceId}/ratings/{uid}`. Using the authenticated user ID as the
 document ID ensures that one member has only one rating per resource. Public
 summaries are stored separately at `ratingAnalytics/{resourceId}` without user
 IDs. Firestore Security Rules let a member read only their own rating, prevent
@@ -331,6 +332,29 @@ when a later stage is finished.
   member and staff accounts were both denied access to `/admin`.
 - Desktop interaction and a `390 x 844` mobile check passed for navigation,
   metric tiles, stacked activity sections and page overflow.
+
+### A3 Stage 8 — Public resource REST API
+
+**Git checkpoint:** `a30a43d` — `feat(api): expose public resource REST endpoints`
+**Status:** Implemented locally, committed and pushed to `origin/main`; Alibaba
+Cloud deployment and production verification are pending.
+
+- Added anonymous, versioned `GET /api/v1/resources` and
+  `GET /api/v1/resources/{resourceId}/summary` endpoints to the existing
+  Alibaba Cloud function while retaining Firebase authentication and exact-origin
+  CORS enforcement on every protected `POST` route.
+- Added wildcard CORS for public reads, five-minute resource-list caching,
+  one-minute rating-summary caching and stable `404`, `405` and `503` errors.
+- Limited responses to published directory fields plus average score and rating
+  count; user IDs, emails, names, roles, individual scores, totals and score
+  distributions remain private.
+- Added an OpenAPI 3.1 contract and focused route, data-copy, aggregate,
+  privacy-boundary and contract tests.
+- Local verification passed 57 frontend tests and 37 function tests, with the
+  function suite also passing under Node.js 20. The production build, both
+  zero-vulnerability production dependency audits and `git diff --check` passed.
+- Rebuilt the ignored Alibaba Cloud deployment archive without environment files.
+  Production CORS, caching, response and error checks remain pending deployment.
 
 ### Later stages and submissions
 
