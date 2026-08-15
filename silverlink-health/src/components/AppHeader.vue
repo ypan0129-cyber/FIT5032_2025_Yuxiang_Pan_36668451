@@ -63,6 +63,9 @@ watch(
             Support plan
           </RouterLink>
           <RouterLink v-if="authState.profile?.role === 'staff'" to="/staff">Staff</RouterLink>
+          <RouterLink v-if="authState.profile?.role === 'admin'" to="/admin">
+            Administration
+          </RouterLink>
         </div>
         <div class="primary-navigation__actions">
           <template v-if="authState.user">

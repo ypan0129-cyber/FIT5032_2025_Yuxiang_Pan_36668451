@@ -1,6 +1,7 @@
 const { cert, getApps, initializeApp } = require('firebase-admin/app')
 const { getAuth } = require('firebase-admin/auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
+const { createAdminMetricsHandler } = require('./adminMetrics')
 const { createSendSupportPlanHandler } = require('./handler')
 const {
   createRebuildRatingAnalyticsHandler,
@@ -146,6 +147,7 @@ function createApiHttpHandler({
   handleSupportPlan,
   handleSaveRating,
   handleRebuildRatingAnalytics,
+  handleAdminMetrics,
   allowedOrigins = DEFAULT_ALLOWED_ORIGINS.join(','),
   logger = console,
 }) {
@@ -235,6 +237,17 @@ function createApiHttpHandler({
         }
 
         result = await handleRebuildRatingAnalytics(authenticatedRequest)
+      } else if (request.path === '/admin/metrics') {
+        if (typeof handleAdminMetrics !== 'function') {
+          return jsonResponse(
+            404,
+            { error: { code: 'not-found', message: 'This API route does not exist.' } },
+            origin,
+            originAllowlist,
+          )
+        }
+
+        result = await handleAdminMetrics(authenticatedRequest)
       } else {
         return jsonResponse(
           404,
@@ -330,6 +343,7 @@ function createRuntimeHandler(environment = process.env) {
     handleSupportPlan,
     handleSaveRating: createSaveRatingHandler(ratingOptions),
     handleRebuildRatingAnalytics: createRebuildRatingAnalyticsHandler(ratingOptions),
+    handleAdminMetrics: createAdminMetricsHandler({ db }),
     allowedOrigins: environment.ALLOWED_ORIGINS,
   })
 }

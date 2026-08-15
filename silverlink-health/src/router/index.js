@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { initialiseAuth, refreshProfile, useAuth } from '../auth'
 import AccessDeniedView from '../views/AccessDeniedView.vue'
+import AdminView from '../views/AdminView.vue'
 import AccountView from '../views/AccountView.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -41,6 +42,12 @@ const router = createRouter({
       name: 'staff',
       component: StaffView,
       meta: { requiresAuth: true, requiredRole: 'staff' },
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminView,
+      meta: { requiresAuth: true, requiredRole: 'admin' },
     },
     { path: '/access-denied', name: 'access-denied', component: AccessDeniedView },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },

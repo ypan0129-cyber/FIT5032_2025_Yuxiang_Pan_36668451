@@ -16,7 +16,10 @@ const displayName = computed(
 )
 const signInMethod = computed(() => getSignInMethodLabel(authState.user?.providerData))
 const isStaff = computed(() => authState.profile?.role === 'staff')
+const isAdmin = computed(() => authState.profile?.role === 'admin')
+const isPrivilegedAccount = computed(() => isStaff.value || isAdmin.value)
 const accountTypeLabel = computed(() => {
+  if (authState.profile?.role === 'admin') return 'Administrator account'
   if (authState.profile?.role === 'staff') return 'Staff account'
   if (authState.profile?.role === 'member') return 'Member account'
   return 'Account details'
@@ -25,6 +28,7 @@ const roleLabel = computed(() => {
   const labels = {
     member: 'Member',
     staff: 'Staff',
+    admin: 'Administrator',
   }
 
   return labels[authState.profile?.role] || 'Role unavailable'
@@ -84,7 +88,7 @@ async function handleSignOut() {
           {{ authState.profileError }}
         </p>
 
-        <EmailVerificationPanel v-if="!isStaff" />
+        <EmailVerificationPanel v-if="!isPrivilegedAccount" />
 
         <button
           class="button button--secondary"
@@ -102,7 +106,12 @@ async function handleSignOut() {
 
       <aside class="account-note" aria-labelledby="account-security-title">
         <ShieldCheck :size="26" aria-hidden="true" />
-        <template v-if="isStaff">
+        <template v-if="isAdmin">
+          <h2 id="account-security-title">Administrator access is active</h2>
+          <p>Your authorised role provides access to system-level aggregate metrics.</p>
+          <RouterLink class="text-link" to="/admin">Open administration</RouterLink>
+        </template>
+        <template v-else-if="isStaff">
           <h2 id="account-security-title">Staff access is active</h2>
           <p>Your authorised role provides access to the staff resource review workspace.</p>
           <RouterLink class="text-link" to="/staff">Open staff workspace</RouterLink>

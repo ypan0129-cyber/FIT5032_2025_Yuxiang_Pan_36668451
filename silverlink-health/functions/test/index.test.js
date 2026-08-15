@@ -125,6 +125,22 @@ test('Alibaba Cloud HTTP adapter routes staff analytics rebuilds and returns 404
   assert.equal(JSON.parse(missing.body).error.code, 'not-found')
 })
 
+test('Alibaba Cloud HTTP adapter routes administrator metrics requests', async () => {
+  let receivedRequest
+  const handler = createHandler({
+    handleAdminMetrics: async (request) => {
+      receivedRequest = request
+      return { generatedAt: '2026-08-15T03:00:00.000Z', users: { total: 3 } }
+    },
+  })
+  const response = await handler(createEvent({ path: '/admin/metrics', body: {} }))
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(receivedRequest.auth.uid, 'member-1')
+  assert.deepEqual(receivedRequest.data, {})
+  assert.equal(JSON.parse(response.body).data.users.total, 3)
+})
+
 test('Alibaba Cloud HTTP adapter does not expose unexpected server errors', async () => {
   const response = await createHandler({
     handleSupportPlan: async () => {

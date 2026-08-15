@@ -44,7 +44,7 @@ let viewVersion = 0
 let saveVersion = 0
 
 const isMember = computed(() => authState.profile?.role === 'member')
-const isStaff = computed(() => authState.profile?.role === 'staff')
+const isReadOnlyRole = computed(() => ['staff', 'admin'].includes(authState.profile?.role))
 const loginTarget = computed(() => ({
   name: 'login',
   query: { redirect: route.fullPath },
@@ -303,8 +303,9 @@ onBeforeUnmount(() => {
         </button>
       </form>
 
-      <p v-else-if="isStaff" class="form-notice">
-        Staff accounts can view the member rating summary but cannot submit a member rating.
+      <p v-else-if="isReadOnlyRole" class="form-notice">
+        Staff and administrator accounts can view the member rating summary but cannot submit a
+        member rating.
       </p>
 
       <p v-else-if="authState.user" class="form-notice form-notice--error">

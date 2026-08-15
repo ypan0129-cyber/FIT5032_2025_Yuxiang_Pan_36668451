@@ -9,7 +9,9 @@ request.
 The function reads the authenticated member role from Firestore, applies the
 email quota, creates the PDF in memory and sends it through Resend. Support-plan
 content is not persisted. Rating writes run in a Firestore transaction that
-updates the member's private rating and the public aggregate together.
+updates the member's private rating and the public aggregate together. The
+administrator metrics route reads only the fields needed to return system-level
+counts and never returns user identifiers or contact details.
 
 ## API routes
 
@@ -18,10 +20,13 @@ updates the member's private rating and the public aggregate together.
 | `POST /` or `/support-plan` | `member` with verified email | Send the support-plan email and PDF. |
 | `POST /ratings/{resourceId}` | `member` | Save one score and update its aggregate. |
 | `POST /rating-analytics/rebuild` | `staff` | Rebuild all six aggregates from legacy ratings. |
+| `POST /admin/metrics` | `admin` | Return aggregate user-role, rating and current email-dispatch metrics. |
 
-All routes reject missing or revoked Firebase ID tokens. Firestore rules allow
-clients to read only their own rating, expose only known aggregate documents,
-and prevent browser clients from writing either data type.
+All routes reject missing or revoked Firebase ID tokens. The server reads the
+caller's Firestore profile before performing a role-protected operation.
+Firestore rules allow clients to read only their own profile and rating, expose
+only known aggregate documents, and prevent browser clients from listing
+administrative source collections.
 
 ## Function Compute configuration
 

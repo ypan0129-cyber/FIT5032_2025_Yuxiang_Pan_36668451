@@ -56,6 +56,16 @@ beforeEach(async () => {
         role: 'staff',
         createdAt: now,
       }),
+      setDoc(doc(database, 'users', 'admin-1'), {
+        displayName: 'Admin One',
+        role: 'admin',
+        createdAt: now,
+      }),
+      setDoc(doc(database, 'emailDispatches', 'member-1'), {
+        dayKey: '2026-08-15',
+        dailyCount: 1,
+        lastStatus: 'sent',
+      }),
       setDoc(doc(database, 'resources', resourceId, 'ratings', 'member-1'), {
         score: 4,
         createdAt: now,
@@ -113,6 +123,17 @@ test('staff and signed-out clients cannot read private rating documents', async 
 
   await assertFails(getDoc(doc(staffDatabase, ...ratingPath)))
   await assertFails(getDoc(doc(publicDatabase, ...ratingPath)))
+})
+
+test('administrator browser clients cannot list protected system collections', async () => {
+  const database = environment.authenticatedContext('admin-1').firestore()
+
+  await assertFails(getDocs(collection(database, 'users')))
+  await assertFails(getDocs(collection(database, 'resources', resourceId, 'ratings')))
+  await assertFails(getDocs(collection(database, 'ratingAnalytics')))
+  await assertFails(getDocs(collection(database, 'emailDispatches')))
+  await assertFails(getDoc(doc(database, 'users', 'member-1')))
+  await assertSucceeds(getDoc(doc(database, 'users', 'admin-1')))
 })
 
 test('browser clients cannot write ratings or forge aggregate documents', async () => {

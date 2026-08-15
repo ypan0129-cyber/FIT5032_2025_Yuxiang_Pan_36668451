@@ -7,6 +7,7 @@ import { containsUnsafeMarkup, getSafeRedirectTarget } from '../src/utils/securi
 test('getSafeRedirectTarget keeps valid application routes', () => {
   assert.equal(getSafeRedirectTarget('/account'), '/account')
   assert.equal(getSafeRedirectTarget('/staff?from=login#summary'), '/staff?from=login#summary')
+  assert.equal(getSafeRedirectTarget('/admin'), '/admin')
 })
 
 test('getSafeRedirectTarget rejects external and malformed redirects', () => {
