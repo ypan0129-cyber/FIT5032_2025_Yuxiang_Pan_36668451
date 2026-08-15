@@ -4,6 +4,10 @@ const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 const { createAdminMetricsHandler } = require('./adminMetrics')
 const { createSendSupportPlanHandler } = require('./handler')
 const {
+  createGetPublicResourceSummaryHandler,
+  createListPublicResourcesHandler,
+} = require('./publicResources')
+const {
   createRebuildRatingAnalyticsHandler,
   createSaveRatingHandler,
 } = require('./ratingAnalytics')
@@ -14,6 +18,7 @@ const DEFAULT_ALLOWED_ORIGINS = Object.freeze([
   'http://127.0.0.1:5173',
 ])
 const ERROR_STATUS = Object.freeze({
+  'not-found': 404,
   unauthenticated: 401,
   'permission-denied': 403,
   'invalid-argument': 400,
@@ -22,6 +27,11 @@ const ERROR_STATUS = Object.freeze({
   unavailable: 503,
   internal: 500,
 })
+const PUBLIC_API_PREFIX = '/api/'
+const PUBLIC_RESOURCES_PATH = '/api/v1/resources'
+const PUBLIC_SUMMARY_PATH = /^\/api\/v1\/resources\/([a-z0-9][a-z0-9-]*)\/summary$/u
+const PUBLIC_LIST_CACHE = 'public, max-age=300, stale-while-revalidate=600'
+const PUBLIC_SUMMARY_CACHE = 'public, max-age=60, stale-while-revalidate=120'
 
 let runtimeHandler
 
@@ -123,6 +133,13 @@ function jsonResponse(statusCode, payload, origin, allowedOrigins, extraHeaders 
   }
 }
 
+function publicApiResponse(statusCode, payload, extraHeaders = {}) {
+  return jsonResponse(statusCode, payload, '', new Set(), {
+    'Access-Control-Allow-Origin': '*',
+    ...extraHeaders,
+  })
+}
+
 function mapHttpError(error) {
   if (error instanceof SupportPlanError) {
     return {
@@ -148,6 +165,8 @@ function createApiHttpHandler({
   handleSaveRating,
   handleRebuildRatingAnalytics,
   handleAdminMetrics,
+  handleListPublicResources,
+  handleGetPublicResourceSummary,
   allowedOrigins = DEFAULT_ALLOWED_ORIGINS.join(','),
   logger = console,
 }) {
@@ -157,10 +176,58 @@ function createApiHttpHandler({
     let request
     let origin = ''
     let uid = ''
+    let isPublicApiRequest = false
 
     try {
       request = parseEvent(event)
       origin = getHeader(request.headers, 'origin')
+      isPublicApiRequest = request.path.startsWith(PUBLIC_API_PREFIX)
+
+      if (isPublicApiRequest) {
+        if (request.method === 'OPTIONS') {
+          return publicApiResponse(204, null, {
+            'Access-Control-Allow-Headers': 'Accept, Content-Type',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Max-Age': '600',
+          })
+        }
+
+        if (request.method !== 'GET') {
+          return publicApiResponse(
+            405,
+            { error: { code: 'method-not-allowed', message: 'Use GET for this endpoint.' } },
+            { Allow: 'GET, OPTIONS' },
+          )
+        }
+
+        if (request.path === PUBLIC_RESOURCES_PATH) {
+          if (typeof handleListPublicResources !== 'function') {
+            return publicApiResponse(
+              404,
+              { error: { code: 'not-found', message: 'This API route does not exist.' } },
+            )
+          }
+
+          const result = await handleListPublicResources()
+          return publicApiResponse(200, { data: result }, {
+            'Cache-Control': PUBLIC_LIST_CACHE,
+          })
+        }
+
+        const summaryMatch = PUBLIC_SUMMARY_PATH.exec(request.path)
+
+        if (summaryMatch && typeof handleGetPublicResourceSummary === 'function') {
+          const result = await handleGetPublicResourceSummary(summaryMatch[1])
+          return publicApiResponse(200, { data: result }, {
+            'Cache-Control': PUBLIC_SUMMARY_CACHE,
+          })
+        }
+
+        return publicApiResponse(
+          404,
+          { error: { code: 'not-found', message: 'This API route does not exist.' } },
+        )
+      }
 
       if (origin && !originAllowlist.has(origin)) {
         throw new SupportPlanError('permission-denied', 'This website cannot use the API.')
@@ -268,7 +335,9 @@ function createApiHttpHandler({
         })
       }
 
-      return jsonResponse(mapped.statusCode, mapped.payload, origin, originAllowlist)
+      return isPublicApiRequest
+        ? publicApiResponse(mapped.statusCode, mapped.payload)
+        : jsonResponse(mapped.statusCode, mapped.payload, origin, originAllowlist)
     }
   }
 }
@@ -344,6 +413,8 @@ function createRuntimeHandler(environment = process.env) {
     handleSaveRating: createSaveRatingHandler(ratingOptions),
     handleRebuildRatingAnalytics: createRebuildRatingAnalyticsHandler(ratingOptions),
     handleAdminMetrics: createAdminMetricsHandler({ db }),
+    handleListPublicResources: createListPublicResourcesHandler(),
+    handleGetPublicResourceSummary: createGetPublicResourceSummaryHandler({ db }),
     allowedOrigins: environment.ALLOWED_ORIGINS,
   })
 }

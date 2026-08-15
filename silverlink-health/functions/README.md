@@ -1,10 +1,10 @@
 # Cloud API function
 
-This package runs the support-plan and rating-analytics workflows as an Alibaba
-Cloud Function Compute event function. The HTTP trigger is public at the cloud
-layer because browser clients cannot create Alibaba Cloud request signatures.
-The function still requires and verifies a Firebase ID token on every `POST`
-request.
+This package runs the public resource API, support-plan, rating-analytics and
+administrator workflows as an Alibaba Cloud Function Compute event function.
+The versioned public API accepts anonymous `GET` requests. Every `POST` route
+still requires and verifies a Firebase ID token because browser clients cannot
+create Alibaba Cloud request signatures.
 
 The function reads the authenticated member role from Firestore, applies the
 email quota, creates the PDF in memory and sends it through Resend. Support-plan
@@ -15,15 +15,20 @@ counts and never returns user identifiers or contact details.
 
 ## API routes
 
-| Route | Required role | Purpose |
+| Route | Access | Purpose |
 | --- | --- | --- |
+| `GET /api/v1/resources` | Public | List the six published support resources. |
+| `GET /api/v1/resources/{resourceId}/summary` | Public | Read a privacy-safe average score and rating count. |
 | `POST /` or `/support-plan` | `member` with verified email | Send the support-plan email and PDF. |
 | `POST /ratings/{resourceId}` | `member` | Save one score and update its aggregate. |
 | `POST /rating-analytics/rebuild` | `staff` | Rebuild all six aggregates from legacy ratings. |
 | `POST /admin/metrics` | `admin` | Return aggregate user-role, rating and current email-dispatch metrics. |
 
-All routes reject missing or revoked Firebase ID tokens. The server reads the
-caller's Firestore profile before performing a role-protected operation.
+Public routes allow cross-origin reads, return versioned JSON and use short
+`Cache-Control` lifetimes. Their OpenAPI 3.1 contract is in
+`docs/openapi.json`. All POST routes reject missing or revoked Firebase ID
+tokens. The server reads the caller's Firestore profile before performing a
+role-protected operation.
 Firestore rules allow clients to read only their own profile and rating, expose
 only known aggregate documents, and prevent browser clients from listing
 administrative source collections.
@@ -38,7 +43,7 @@ administrative source collections.
 - Timeout: 60 seconds
 - Internet access: enabled
 - HTTP trigger authentication: anonymous
-- HTTP methods: `POST` and `OPTIONS`
+- HTTP methods: `GET`, `POST` and `OPTIONS`
 
 Hong Kong is used so outbound access to Firebase and Resend does not depend on
 the availability of Google services from a mainland China region.

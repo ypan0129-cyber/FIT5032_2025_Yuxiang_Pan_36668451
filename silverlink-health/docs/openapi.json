@@ -1,0 +1,255 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SilverLink Health Public API",
+    "version": "1.0.0",
+    "description": "Versioned, read-only access to the public support directory and privacy-safe rating summaries."
+  },
+  "servers": [
+    {
+      "url": "https://silverlort-plan-hwzxoajaze.cn-hongkong.fcapp.run",
+      "description": "Alibaba Cloud Function Compute production endpoint"
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "Resources",
+      "description": "Public mental-health support resource information"
+    }
+  ],
+  "paths": {
+    "/api/v1/resources": {
+      "get": {
+        "operationId": "listResources",
+        "summary": "List public support resources",
+        "description": "Returns the six published directory entries. Authentication is not required and browser clients may read the response from any origin.",
+        "tags": ["Resources"],
+        "responses": {
+          "200": {
+            "description": "Published support resources",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "description": "Always * for the public API.",
+                "schema": { "type": "string", "const": "*" }
+              },
+              "Cache-Control": {
+                "description": "Five-minute browser cache with stale revalidation.",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResourceListResponse" }
+              }
+            }
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          }
+        }
+      }
+    },
+    "/api/v1/resources/{resourceId}/summary": {
+      "get": {
+        "operationId": "getResourceRatingSummary",
+        "summary": "Get a resource rating summary",
+        "description": "Returns only the public resource identity, average score and rating count. Individual scores and account data are never included.",
+        "tags": ["Resources"],
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "description": "A published SilverLink Health resource identifier.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lifeline-australia",
+                "beyond-blue",
+                "head-to-health",
+                "friendline",
+                "grief-australia",
+                "sleep-health-foundation"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Privacy-safe aggregate rating summary",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "description": "Always * for the public API.",
+                "schema": { "type": "string", "const": "*" }
+              },
+              "Cache-Control": {
+                "description": "One-minute browser cache with stale revalidation.",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RatingSummaryResponse" }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PublicResource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "category",
+          "summary",
+          "deliveryModes",
+          "phone",
+          "website",
+          "openingHours",
+          "location",
+          "ratingSummaryPath"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "category": { "type": "string" },
+          "summary": { "type": "string" },
+          "deliveryModes": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["Phone", "Online", "In person"] },
+            "uniqueItems": true
+          },
+          "phone": { "type": "string" },
+          "website": { "type": "string", "format": "uri" },
+          "openingHours": { "type": "string" },
+          "location": { "type": "string" },
+          "ratingSummaryPath": { "type": "string", "pattern": "^/api/v1/resources/[a-z0-9-]+/summary$" }
+        }
+      },
+      "ResourceIdentity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "category"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "category": { "type": "string" }
+        }
+      },
+      "RatingSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["averageScore", "ratingCount"],
+        "properties": {
+          "averageScore": {
+            "type": ["number", "null"],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "ratingCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ResourceListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["apiVersion", "count", "resources"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "v1" },
+          "count": { "type": "integer", "const": 6 },
+          "resources": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": { "$ref": "#/components/schemas/PublicResource" }
+          }
+        }
+      },
+      "RatingSummaryData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["apiVersion", "resource", "ratingSummary"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "v1" },
+          "resource": { "$ref": "#/components/schemas/ResourceIdentity" },
+          "ratingSummary": { "$ref": "#/components/schemas/RatingSummary" }
+        }
+      },
+      "ResourceListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/ResourceListData" }
+        }
+      },
+      "RatingSummaryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/RatingSummaryData" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "The route or resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "The public API accepts only GET and OPTIONS.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "The aggregate is temporarily unavailable.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  }
+}

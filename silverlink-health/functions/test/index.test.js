@@ -55,6 +55,90 @@ test('Alibaba Cloud HTTP adapter handles CORS preflight for an allowed site', as
   assert.match(response.headers['Access-Control-Allow-Methods'], /POST/u)
 })
 
+test('public API lists resources without authentication and allows cross-origin reads', async () => {
+  let verifiedToken = false
+  const handler = createHandler({
+    verifyIdToken: async () => {
+      verifiedToken = true
+      throw new Error('Public routes must not verify tokens')
+    },
+    handleListPublicResources: async () => ({
+      apiVersion: 'v1',
+      count: 1,
+      resources: [{ id: 'beyond-blue' }],
+    }),
+  })
+  const response = await handler(createEvent({
+    method: 'GET',
+    origin: 'https://public-client.example',
+    authorization: '',
+    path: '/api/v1/resources',
+  }))
+  const body = JSON.parse(response.body)
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.headers['Access-Control-Allow-Origin'], '*')
+  assert.match(response.headers['Cache-Control'], /max-age=300/u)
+  assert.equal(body.data.apiVersion, 'v1')
+  assert.equal(body.data.resources[0].id, 'beyond-blue')
+  assert.equal(verifiedToken, false)
+})
+
+test('public API routes known rating summaries with shorter caching', async () => {
+  let receivedResourceId
+  const handler = createHandler({
+    handleGetPublicResourceSummary: async (resourceId) => {
+      receivedResourceId = resourceId
+      return {
+        apiVersion: 'v1',
+        resource: { id: resourceId },
+        ratingSummary: { averageScore: 4.5, ratingCount: 2 },
+      }
+    },
+  })
+  const response = await handler(createEvent({
+    method: 'GET',
+    origin: 'https://public-client.example',
+    authorization: '',
+    path: '/api/v1/resources/lifeline-australia/summary',
+  }))
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(receivedResourceId, 'lifeline-australia')
+  assert.match(response.headers['Cache-Control'], /max-age=60/u)
+  assert.equal(JSON.parse(response.body).data.ratingSummary.ratingCount, 2)
+})
+
+test('public API preflight, unsupported methods, and unknown versions have stable responses', async () => {
+  const handler = createHandler()
+  const preflight = await handler(createEvent({
+    method: 'OPTIONS',
+    origin: 'https://public-client.example',
+    authorization: '',
+    path: '/api/v1/resources',
+  }))
+  const method = await handler(createEvent({
+    method: 'POST',
+    origin: 'https://public-client.example',
+    authorization: '',
+    path: '/api/v1/resources',
+  }))
+  const unknown = await handler(createEvent({
+    method: 'GET',
+    origin: 'https://public-client.example',
+    authorization: '',
+    path: '/api/v2/resources',
+  }))
+
+  assert.equal(preflight.statusCode, 204)
+  assert.match(preflight.headers['Access-Control-Allow-Methods'], /GET/u)
+  assert.equal(method.statusCode, 405)
+  assert.equal(method.headers.Allow, 'GET, OPTIONS')
+  assert.equal(JSON.parse(method.body).error.code, 'method-not-allowed')
+  assert.equal(unknown.statusCode, 404)
+  assert.equal(JSON.parse(unknown.body).error.code, 'not-found')
+})
+
 test('Alibaba Cloud HTTP adapter rejects untrusted origins and missing tokens', async () => {
   const handler = createHandler()
   const deniedOrigin = await handler(createEvent({ origin: 'https://attacker.example' }))
