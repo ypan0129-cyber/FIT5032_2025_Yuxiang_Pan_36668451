@@ -1,7 +1,4 @@
 {
-  "functions": {
-    "source": "functions"
-  },
   "firestore": {
     "rules": "firestore.rules"
   },
@@ -9,10 +6,6 @@
     "firestore": {
       "host": "127.0.0.1",
       "port": 8088
-    },
-    "functions": {
-      "host": "127.0.0.1",
-      "port": 5001
     }
   }
 }

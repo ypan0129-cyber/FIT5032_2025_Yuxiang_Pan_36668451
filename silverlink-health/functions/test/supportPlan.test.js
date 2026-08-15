@@ -1,14 +1,14 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
-import { PDFDocument } from 'pdf-lib'
-import {
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const { PDFDocument } = require('pdf-lib')
+const {
   buildSupportPlanEmail,
   createResendSender,
   createSupportPlanPdf,
   maskEmail,
   SupportPlanError,
   validateSupportPlanPayload,
-} from '../src/supportPlan.js'
+} = require('../src/supportPlan')
 
 const validPlan = {
   resourceIds: ['lifeline-australia', 'head-to-health'],

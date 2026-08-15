@@ -1,15 +1,15 @@
-import {
+const {
   completeEmailAttempt,
   failEmailAttempt,
   reserveEmailAttempt,
-} from './emailQuota.js'
-import {
+} = require('./emailQuota')
+const {
   buildSupportPlanEmail,
   createSupportPlanPdf,
   maskEmail,
   SupportPlanError,
   validateSupportPlanPayload,
-} from './supportPlan.js'
+} = require('./supportPlan')
 
 function getVerifiedEmail(auth) {
   const email = typeof auth?.token?.email === 'string' ? auth.token.email.trim() : ''
@@ -37,7 +37,7 @@ function getRecipientName(profile, auth) {
   return name.trim().slice(0, 80)
 }
 
-export function createSendSupportPlanHandler({ db, sendEmail, timestampFromDate, now = Date }) {
+function createSendSupportPlanHandler({ db, sendEmail, timestampFromDate, now = Date }) {
   return async function handleSendSupportPlan(request) {
     const recipientEmail = getVerifiedEmail(request.auth)
     const plan = validateSupportPlanPayload(request.data)
@@ -98,3 +98,5 @@ export function createSendSupportPlanHandler({ db, sendEmail, timestampFromDate,
     }
   }
 }
+
+module.exports = { createSendSupportPlanHandler }

@@ -1,10 +1,19 @@
-import { httpsCallable } from 'firebase/functions'
 import { requireFirebase } from '../firebase'
+import { createSupportPlanSender, createSupportPlanApiError } from './supportPlanApi'
+
+const supportPlanApiUrl = import.meta.env.VITE_SUPPORT_PLAN_API_URL?.trim() || ''
 
 export async function sendSupportPlan(payload) {
-  const { functions } = requireFirebase()
-  const callable = httpsCallable(functions, 'sendSupportPlan', { timeout: 65_000 })
-  const response = await callable(payload)
+  const { auth } = requireFirebase()
 
-  return response.data
+  if (!auth.currentUser) {
+    throw createSupportPlanApiError('unauthenticated', 'Log in before sending a support plan.')
+  }
+
+  const sender = createSupportPlanSender({
+    apiUrl: supportPlanApiUrl,
+    getIdToken: () => auth.currentUser.getIdToken(true),
+  })
+
+  return sender(payload)
 }

@@ -1,6 +1,6 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
-import { createSendSupportPlanHandler } from '../src/handler.js'
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const { createSendSupportPlanHandler } = require('../src/handler')
 
 const validPlan = {
   resourceIds: ['lifeline-australia'],

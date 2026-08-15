@@ -1,7 +1,7 @@
-import { SupportPlanError } from './supportPlan.js'
+const { SupportPlanError } = require('./supportPlan')
 
-export const EMAIL_COOLDOWN_MS = 60_000
-export const EMAIL_DAILY_LIMIT = 5
+const EMAIL_COOLDOWN_MS = 60_000
+const EMAIL_DAILY_LIMIT = 5
 
 function toMillis(value) {
   if (typeof value?.toMillis === 'function') return value.toMillis()
@@ -9,11 +9,11 @@ function toMillis(value) {
   return Number(value) || 0
 }
 
-export function getUtcDayKey(date) {
+function getUtcDayKey(date) {
   return date.toISOString().slice(0, 10)
 }
 
-export async function reserveEmailAttempt({
+async function reserveEmailAttempt({
   db,
   uid,
   now,
@@ -60,7 +60,7 @@ export async function reserveEmailAttempt({
   return reference
 }
 
-export function completeEmailAttempt({ reference, messageId, now, timestampFromDate }) {
+function completeEmailAttempt({ reference, messageId, now, timestampFromDate }) {
   return reference.set(
     {
       lastStatus: 'sent',
@@ -71,7 +71,7 @@ export function completeEmailAttempt({ reference, messageId, now, timestampFromD
   )
 }
 
-export function failEmailAttempt({ reference, now, timestampFromDate }) {
+function failEmailAttempt({ reference, now, timestampFromDate }) {
   return reference.set(
     {
       lastStatus: 'failed',
@@ -79,4 +79,13 @@ export function failEmailAttempt({ reference, now, timestampFromDate }) {
     },
     { merge: true },
   )
+}
+
+module.exports = {
+  EMAIL_COOLDOWN_MS,
+  EMAIL_DAILY_LIMIT,
+  completeEmailAttempt,
+  failEmailAttempt,
+  getUtcDayKey,
+  reserveEmailAttempt,
 }

@@ -1,10 +1,10 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
-import {
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const {
   EMAIL_DAILY_LIMIT,
   getUtcDayKey,
   reserveEmailAttempt,
-} from '../src/emailQuota.js'
+} = require('../src/emailQuota')
 
 function createQuotaDatabase(initialData = null) {
   let data = initialData

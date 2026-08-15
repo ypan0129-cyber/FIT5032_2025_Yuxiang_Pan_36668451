@@ -266,12 +266,16 @@ export function getAuthErrorMessage(error) {
     'auth/weak-password': 'Choose a stronger password with at least 8 characters.',
     'permission-denied': 'Your account profile could not be created. Please contact support.',
     'firestore/permission-denied': 'Your account profile could not be created. Please contact support.',
-    'functions/failed-precondition': 'Verify your email address before sending a support plan.',
-    'functions/invalid-argument': 'Check the support plan fields and try again.',
-    'functions/permission-denied': 'This account cannot send a support plan.',
-    'functions/resource-exhausted': 'Please wait before sending another support plan email.',
-    'functions/unavailable': 'The email service is temporarily unavailable. Try again later.',
-    'functions/internal': 'The support plan could not be sent. Try again later.',
+    'support-plan/failed-precondition':
+      'Verify your email address before sending a support plan.',
+    'support-plan/invalid-argument': 'Check the support plan fields and try again.',
+    'support-plan/permission-denied': 'This account cannot send a support plan.',
+    'support-plan/resource-exhausted':
+      'Please wait before sending another support plan email.',
+    'support-plan/unavailable': 'The email service is temporarily unavailable. Try again later.',
+    'support-plan/not-configured': 'Support plan delivery is not configured yet.',
+    'support-plan/unauthenticated': 'Log in again before sending a support plan.',
+    'support-plan/internal': 'The support plan could not be sent. Try again later.',
   }
 
   if (error?.message === 'Firebase is not configured for this environment.') {

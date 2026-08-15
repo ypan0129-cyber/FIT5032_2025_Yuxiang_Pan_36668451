@@ -1,10 +1,10 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib')
 
-export const CONTACT_PREFERENCES = Object.freeze(['Phone', 'Online', 'In person'])
-export const MAX_SUPPORT_PLAN_RESOURCES = 3
-export const MAX_SUPPORT_PLAN_NOTES_LENGTH = 500
+const CONTACT_PREFERENCES = Object.freeze(['Phone', 'Online', 'In person'])
+const MAX_SUPPORT_PLAN_RESOURCES = 3
+const MAX_SUPPORT_PLAN_NOTES_LENGTH = 500
 
-export const SUPPORT_RESOURCES = Object.freeze([
+const SUPPORT_RESOURCES = Object.freeze([
   {
     id: 'lifeline-australia',
     title: 'Lifeline Australia',
@@ -48,7 +48,7 @@ const allowedPayloadKeys = new Set(['resourceIds', 'contactPreference', 'notes']
 const unsafeControlCharacterPattern = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/u
 const unsafeMarkupPattern = /[<>]/u
 
-export class SupportPlanError extends Error {
+class SupportPlanError extends Error {
   constructor(code, message) {
     super(message)
     this.name = 'SupportPlanError'
@@ -56,7 +56,7 @@ export class SupportPlanError extends Error {
   }
 }
 
-export function validateSupportPlanPayload(payload) {
+function validateSupportPlanPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     throw new SupportPlanError('invalid-argument', 'Enter a valid support plan.')
   }
@@ -108,11 +108,11 @@ export function validateSupportPlanPayload(payload) {
   }
 }
 
-export function getSupportPlanResources(resourceIds) {
+function getSupportPlanResources(resourceIds) {
   return resourceIds.map((id) => resourceById.get(id))
 }
 
-export function maskEmail(email) {
+function maskEmail(email) {
   const [localPart, domain] = String(email).split('@')
 
   if (!localPart || !domain) {
@@ -131,7 +131,7 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;')
 }
 
-export function buildSupportPlanEmail({ recipientName, plan }) {
+function buildSupportPlanEmail({ recipientName, plan }) {
   const resources = getSupportPlanResources(plan.resourceIds)
   const resourceText = resources
     .map((resource) => {
@@ -240,7 +240,7 @@ function wrapPdfText(text, font, size, maxWidth) {
   return lines
 }
 
-export async function createSupportPlanPdf({ recipientName, recipientEmail, plan, createdAt }) {
+async function createSupportPlanPdf({ recipientName, recipientEmail, plan, createdAt }) {
   const document = await PDFDocument.create()
   const regularFont = await document.embedFont(StandardFonts.Helvetica)
   const boldFont = await document.embedFont(StandardFonts.HelveticaBold)
@@ -355,7 +355,7 @@ export async function createSupportPlanPdf({ recipientName, recipientEmail, plan
   return document.save()
 }
 
-export function createResendSender({ apiKey, fromAddress, fetchImpl = fetch }) {
+function createResendSender({ apiKey, fromAddress, fetchImpl = fetch }) {
   if (!apiKey || !fromAddress) {
     throw new SupportPlanError('internal', 'The email service is not configured.')
   }
@@ -394,4 +394,18 @@ export function createResendSender({ apiKey, fromAddress, fetchImpl = fetch }) {
 
     return result.id
   }
+}
+
+module.exports = {
+  CONTACT_PREFERENCES,
+  MAX_SUPPORT_PLAN_NOTES_LENGTH,
+  MAX_SUPPORT_PLAN_RESOURCES,
+  SUPPORT_RESOURCES,
+  SupportPlanError,
+  buildSupportPlanEmail,
+  createResendSender,
+  createSupportPlanPdf,
+  getSupportPlanResources,
+  maskEmail,
+  validateSupportPlanPayload,
 }

@@ -61,17 +61,17 @@ test('map dependencies and browser location permission are explicitly allowed', 
   assert.match(viteConfig, /geolocation=\(self\)/u)
 })
 
-test('callable functions are limited to Firebase and the local emulator', async () => {
+test('support plan API CSP uses the exact environment-configured origin', async () => {
   const [indexHtml, viteConfig] = await Promise.all([
     readFile(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8'),
     readFile(fileURLToPath(new URL('../vite.config.js', import.meta.url)), 'utf8'),
   ])
-  const cloudFunctionsSource =
-    /https:\/\/australia-southeast1-sliverlink-health\.cloudfunctions\.net/u
-  const localFunctionsSource = /http:\/\/127\.0\.0\.1:5001/u
+  const apiOriginPlaceholder = /__SUPPORT_PLAN_API_ORIGIN__/u
+  const configuredApiUrl = /VITE_SUPPORT_PLAN_API_URL/u
 
-  assert.match(indexHtml, cloudFunctionsSource)
-  assert.match(viteConfig, cloudFunctionsSource)
-  assert.match(indexHtml, localFunctionsSource)
-  assert.match(viteConfig, localFunctionsSource)
+  assert.match(indexHtml, apiOriginPlaceholder)
+  assert.match(viteConfig, apiOriginPlaceholder)
+  assert.match(viteConfig, configuredApiUrl)
+  assert.doesNotMatch(indexHtml, /cloudfunctions\.net|fc\.aliyuncs\.com/u)
+  assert.doesNotMatch(viteConfig, /cloudfunctions\.net|\*\.fc\.aliyuncs\.com/u)
 })
