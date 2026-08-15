@@ -34,16 +34,6 @@ service cloud.firestore {
       ];
     }
 
-    function validRating(rating) {
-      return rating.keys().hasAll(['score', 'createdAt', 'updatedAt'])
-        && rating.keys().hasOnly(['score', 'createdAt', 'updatedAt'])
-        && rating.score is int
-        && rating.score >= 1
-        && rating.score <= 5
-        && rating.createdAt is timestamp
-        && rating.updatedAt is timestamp;
-    }
-
     match /users/{userId} {
       allow create: if ownsUserDocument(userId)
         && request.resource.data.keys().hasAll(['displayName', 'role', 'createdAt'])
@@ -57,25 +47,13 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId}/ratings/{userId} {
-      allow read: if validResourceId(resourceId);
+      allow get: if validResourceId(resourceId) && ownsUserDocument(userId);
+      allow list, create, update, delete: if false;
+    }
 
-      allow create: if validResourceId(resourceId)
-        && ownsUserDocument(userId)
-        && hasRole('member')
-        && validRating(request.resource.data)
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time;
-
-      allow update: if validResourceId(resourceId)
-        && ownsUserDocument(userId)
-        && hasRole('member')
-        && validRating(request.resource.data)
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.updatedAt == request.time
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['score', 'updatedAt']);
-
-      allow delete: if false;
+    match /ratingAnalytics/{resourceId} {
+      allow get: if validResourceId(resourceId);
+      allow list, create, update, delete: if false;
     }
 
     match /{document=**} {

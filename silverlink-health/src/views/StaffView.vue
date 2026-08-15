@@ -1,13 +1,20 @@
 <script setup>
-import { RefreshCw } from '@lucide/vue'
-import { computed, onMounted, ref } from 'vue'
+import { DatabaseBackup, RefreshCw } from '@lucide/vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import DataTable from '../components/DataTable.vue'
-import { getRatingSummary } from '../services/ratingService'
+import { getRatingErrorMessage, getRatingSummary, rebuildRatingAnalytics } from '../services/ratingService'
 import { resources } from '../data/resources'
+
+const RatingAnalyticsChart = defineAsyncComponent(
+  () => import('../components/RatingAnalyticsChart.vue'),
+)
 
 const summaries = ref({})
 const isRefreshing = ref(false)
+const isRebuilding = ref(false)
 const hasLoaded = ref(false)
+const rebuildMessage = ref('')
+const rebuildError = ref('')
 
 const summaryColumns = [
   { key: 'title', label: 'Service', searchable: true },
@@ -95,6 +102,26 @@ async function refreshSummaries() {
   isRefreshing.value = false
 }
 
+async function rebuildSummaries() {
+  if (isRefreshing.value || isRebuilding.value) {
+    return
+  }
+
+  isRebuilding.value = true
+  rebuildMessage.value = ''
+  rebuildError.value = ''
+
+  try {
+    const result = await rebuildRatingAnalytics()
+    rebuildMessage.value = `Rating analytics rebuilt for ${result.rebuilt} resources.`
+    await refreshSummaries()
+  } catch (error) {
+    rebuildError.value = getRatingErrorMessage(error)
+  } finally {
+    isRebuilding.value = false
+  }
+}
+
 function getSummary(resourceId) {
   return summaries.value[resourceId] || loadingSummary()
 }
@@ -142,20 +169,39 @@ onMounted(refreshSummaries)
           <h2 id="staff-resources-title">Available resources</h2>
           <p>{{ resources.length }} total resources</p>
         </div>
-        <button
-          class="button button--secondary staff-refresh-button"
-          type="button"
-          :disabled="isRefreshing"
-          @click="refreshSummaries"
-        >
-          <RefreshCw :size="18" :class="{ 'staff-refresh-icon--active': isRefreshing }" aria-hidden="true" />
-          {{ isRefreshing ? 'Refreshing...' : 'Refresh summaries' }}
-        </button>
+        <div class="staff-actions">
+          <button
+            class="button button--secondary"
+            type="button"
+            :disabled="isRefreshing || isRebuilding"
+            @click="rebuildSummaries"
+          >
+            <DatabaseBackup :size="18" aria-hidden="true" />
+            {{ isRebuilding ? 'Rebuilding...' : 'Rebuild analytics' }}
+          </button>
+          <button
+            class="button button--secondary"
+            type="button"
+            :disabled="isRefreshing || isRebuilding"
+            @click="refreshSummaries"
+          >
+            <RefreshCw :size="18" :class="{ 'staff-refresh-icon--active': isRefreshing }" aria-hidden="true" />
+            {{ isRefreshing ? 'Refreshing...' : 'Refresh summaries' }}
+          </button>
+        </div>
       </div>
 
       <p v-if="statusMessage" class="staff-status" role="status" aria-live="polite">
         {{ statusMessage }}
       </p>
+      <p v-if="rebuildMessage" class="staff-operation-message" role="status">
+        {{ rebuildMessage }}
+      </p>
+      <p v-if="rebuildError" class="staff-operation-message staff-operation-message--error" role="alert">
+        {{ rebuildError }}
+      </p>
+
+      <RatingAnalyticsChart :rows="summaryRows" :is-loading="!hasLoaded || isRefreshing" />
 
       <DataTable
         :rows="summaryRows"
@@ -188,6 +234,22 @@ onMounted(refreshSummaries)
   color: var(--colour-muted);
 }
 
+.staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.staff-operation-message {
+  margin: -10px 0 24px;
+  color: var(--colour-primary-dark);
+}
+
+.staff-operation-message--error {
+  color: #8f2f2f;
+}
+
 .staff-refresh-icon--active {
   animation: staff-refresh-spin 0.8s linear infinite;
 }
@@ -199,9 +261,9 @@ onMounted(refreshSummaries)
 }
 
 @media (max-width: 575px) {
-  .staff-refresh-button {
+  .staff-actions,
+  .staff-actions .button {
     width: 100%;
-    margin-top: 12px;
   }
 
   .staff-status {

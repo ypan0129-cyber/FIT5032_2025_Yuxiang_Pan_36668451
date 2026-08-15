@@ -1,17 +1,13 @@
 import {
-  average,
-  collection,
-  count,
   doc,
-  getAggregateFromServer,
   getDoc,
-  serverTimestamp,
-  setDoc,
 } from 'firebase/firestore'
 import { requireFirebase } from '../firebase'
 import { isValidScore, normaliseRatingSummary } from '../utils/rating'
+import { createRatingAnalyticsRebuilder, createRatingSaver } from './ratingApi'
 
 const resourceIdPattern = /^[a-z0-9][a-z0-9-]*$/
+const ratingApiUrl = import.meta.env.VITE_SUPPORT_PLAN_API_URL?.trim() || ''
 
 function createRatingError(code, message) {
   const error = new Error(message)
@@ -27,10 +23,6 @@ function validateResourceId(resourceId) {
   return resourceId
 }
 
-function getRatingsCollection(db, resourceId) {
-  return collection(db, 'resources', resourceId, 'ratings')
-}
-
 function getRatingDocument(db, resourceId, uid) {
   return doc(db, 'resources', resourceId, 'ratings', uid)
 }
@@ -43,13 +35,9 @@ function getRatingDocument(db, resourceId, uid) {
 export async function getRatingSummary(resourceId) {
   const validResourceId = validateResourceId(resourceId)
   const { db } = requireFirebase()
-  const ratings = getRatingsCollection(db, validResourceId)
-  const aggregateSnapshot = await getAggregateFromServer(ratings, {
-    average: average('score'),
-    count: count(),
-  })
+  const aggregateSnapshot = await getDoc(doc(db, 'ratingAnalytics', validResourceId))
 
-  return normaliseRatingSummary(aggregateSnapshot.data())
+  return normaliseRatingSummary(aggregateSnapshot.exists() ? aggregateSnapshot.data() : null)
 }
 
 /**
@@ -78,9 +66,9 @@ export async function getOwnRating(resourceId) {
 }
 
 /**
- * Create or replace the signed-in user's rating. The deterministic document
- * ID means one user can have at most one rating per resource. Existing
- * createdAt values are carried forward when a rating is changed.
+ * Create or replace the signed-in user's rating through the authenticated
+ * server endpoint. The server updates the private rating and public aggregate
+ * together in a Firestore transaction.
  */
 export async function saveOwnRating(resourceId, score) {
   const validResourceId = validateResourceId(resourceId)
@@ -89,42 +77,33 @@ export async function saveOwnRating(resourceId, score) {
     throw createRatingError('rating/invalid-score', 'Choose a rating from 1 to 5.')
   }
 
-  const { auth, db } = requireFirebase()
+  const { auth } = requireFirebase()
 
   if (!auth.currentUser) {
     throw createRatingError('rating/unauthenticated', 'Sign in to submit a rating.')
   }
 
-  const ratingDocument = getRatingDocument(db, validResourceId, auth.currentUser.uid)
-  const existingSnapshot = await getDoc(ratingDocument)
-  const hasExistingRating = existingSnapshot.exists()
-  const existingData = hasExistingRating ? existingSnapshot.data() : null
+  const saveRating = createRatingSaver({
+    apiUrl: ratingApiUrl,
+    getIdToken: () => auth.currentUser.getIdToken(true),
+  })
 
-  if (hasExistingRating) {
-    if (!existingData?.createdAt) {
-      throw createRatingError(
-        'rating/invalid-existing',
-        'This saved rating is incomplete. Please contact support.',
-      )
-    }
+  return saveRating(validResourceId, score)
+}
 
-    await setDoc(ratingDocument, {
-      score,
-      createdAt: existingData.createdAt,
-      updatedAt: serverTimestamp(),
-    })
-  } else {
-    await setDoc(ratingDocument, {
-      score,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+export async function rebuildRatingAnalytics() {
+  const { auth } = requireFirebase()
+
+  if (!auth.currentUser) {
+    throw createRatingError('rating/unauthenticated', 'Sign in to rebuild rating analytics.')
   }
 
-  return {
-    score,
-    isNew: !hasExistingRating,
-  }
+  const rebuild = createRatingAnalyticsRebuilder({
+    apiUrl: ratingApiUrl,
+    getIdToken: () => auth.currentUser.getIdToken(true),
+  })
+
+  return rebuild()
 }
 
 export function getRatingErrorMessage(error) {
@@ -133,6 +112,12 @@ export function getRatingErrorMessage(error) {
     'rating/invalid-score': 'Choose a rating from 1 to 5.',
     'rating/unauthenticated': 'Sign in to submit a rating.',
     'rating/invalid-existing': 'This saved rating is incomplete. Please contact support.',
+    'rating/invalid-argument': 'Choose a rating from 1 to 5.',
+    'rating/not-configured': 'Ratings are not configured for this environment yet.',
+    'rating/permission-denied': 'You do not have permission to complete this rating operation.',
+    'rating/unavailable': 'Ratings are temporarily unavailable. Check your connection and try again.',
+    'rating/failed-precondition': 'This saved rating is incomplete. Please contact support.',
+    'rating/internal': 'We could not save the rating. Please try again.',
     'permission-denied': 'Your rating could not be saved. Please try again.',
     'firestore/permission-denied': 'Your rating could not be saved. Please try again.',
     unavailable: 'Ratings are temporarily unavailable. Check your connection and try again.',

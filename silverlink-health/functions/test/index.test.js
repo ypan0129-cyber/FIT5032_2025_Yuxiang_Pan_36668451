@@ -17,9 +17,10 @@ function createEvent({
   origin = allowedOrigin,
   authorization = 'Bearer valid-token',
   body = validPayload,
+  path = '/',
 } = {}) {
   return {
-    requestContext: { http: { method } },
+    requestContext: { http: { method, path } },
     headers: {
       authorization,
       origin,
@@ -91,6 +92,37 @@ test('Alibaba Cloud HTTP adapter verifies Firebase identity and returns plan dat
   assert.equal(receivedRequest.auth.uid, 'member-1')
   assert.deepEqual(receivedRequest.data, validPayload)
   assert.equal(body.data.recipient, 'v***@example.com')
+})
+
+test('Alibaba Cloud HTTP adapter routes rating saves without trusting a body resource ID', async () => {
+  let receivedRequest
+  const handler = createHandler({
+    handleSaveRating: async (request) => {
+      receivedRequest = request
+      return { score: request.data.score, isNew: true }
+    },
+  })
+  const response = await handler(createEvent({
+    path: '/ratings/beyond-blue',
+    body: { score: 4, resourceId: 'lifeline-australia' },
+  }))
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(receivedRequest.data.resourceId, 'beyond-blue')
+  assert.equal(receivedRequest.data.score, 4)
+})
+
+test('Alibaba Cloud HTTP adapter routes staff analytics rebuilds and returns 404 elsewhere', async () => {
+  const handler = createHandler({
+    handleRebuildRatingAnalytics: async () => ({ rebuilt: 6 }),
+  })
+  const rebuilt = await handler(createEvent({ path: '/rating-analytics/rebuild', body: {} }))
+  const missing = await handler(createEvent({ path: '/unknown', body: {} }))
+
+  assert.equal(rebuilt.statusCode, 200)
+  assert.equal(JSON.parse(rebuilt.body).data.rebuilt, 6)
+  assert.equal(missing.statusCode, 404)
+  assert.equal(JSON.parse(missing.body).error.code, 'not-found')
 })
 
 test('Alibaba Cloud HTTP adapter does not expose unexpected server errors', async () => {

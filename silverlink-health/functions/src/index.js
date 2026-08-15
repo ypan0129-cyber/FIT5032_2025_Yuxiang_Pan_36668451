@@ -2,6 +2,10 @@ const { cert, getApps, initializeApp } = require('firebase-admin/app')
 const { getAuth } = require('firebase-admin/auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 const { createSendSupportPlanHandler } = require('./handler')
+const {
+  createRebuildRatingAnalyticsHandler,
+  createSaveRatingHandler,
+} = require('./ratingAnalytics')
 const { createResendSender, SupportPlanError } = require('./supportPlan')
 
 const DEFAULT_ALLOWED_ORIGINS = Object.freeze([
@@ -32,7 +36,7 @@ function parseEvent(event) {
   const envelope = typeof rawEvent === 'string' ? JSON.parse(rawEvent) : rawEvent
 
   if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) {
-    throw new SupportPlanError('invalid-argument', 'Enter a valid support plan request.')
+    throw new SupportPlanError('invalid-argument', 'Enter a valid API request.')
   }
 
   return {
@@ -42,6 +46,9 @@ function parseEvent(event) {
     method: String(
       envelope.requestContext?.http?.method || envelope.httpMethod || envelope.method || '',
     ).toUpperCase(),
+    path: String(
+      envelope.rawPath || envelope.requestContext?.http?.path || envelope.path || '/',
+    ).replace(/\/+$/u, '') || '/',
   }
 }
 
@@ -51,7 +58,7 @@ function parseRequestBody(body, isBase64Encoded) {
   }
 
   if (typeof body !== 'string') {
-    throw new SupportPlanError('invalid-argument', 'Enter a valid support plan request.')
+    throw new SupportPlanError('invalid-argument', 'Enter a valid API request.')
   }
 
   try {
@@ -66,7 +73,7 @@ function parseRequestBody(body, isBase64Encoded) {
 
     return payload
   } catch {
-    throw new SupportPlanError('invalid-argument', 'Enter a valid support plan request.')
+    throw new SupportPlanError('invalid-argument', 'Enter a valid API request.')
   }
 }
 
@@ -128,15 +135,17 @@ function mapHttpError(error) {
     payload: {
       error: {
         code: 'internal',
-        message: 'The support plan could not be sent. Try again later.',
+        message: 'The request could not be completed. Try again later.',
       },
     },
   }
 }
 
-function createSupportPlanHttpHandler({
+function createApiHttpHandler({
   verifyIdToken,
   handleSupportPlan,
+  handleSaveRating,
+  handleRebuildRatingAnalytics,
   allowedOrigins = DEFAULT_ALLOWED_ORIGINS.join(','),
   logger = console,
 }) {
@@ -152,7 +161,7 @@ function createSupportPlanHttpHandler({
       origin = getHeader(request.headers, 'origin')
 
       if (origin && !originAllowlist.has(origin)) {
-        throw new SupportPlanError('permission-denied', 'This website cannot use the support plan API.')
+        throw new SupportPlanError('permission-denied', 'This website cannot use the API.')
       }
 
       if (request.method === 'OPTIONS') {
@@ -177,7 +186,7 @@ function createSupportPlanHttpHandler({
       const match = /^Bearer ([A-Za-z0-9._~-]+)$/u.exec(authorization)
 
       if (!match || match[1].length > 8192) {
-        throw new SupportPlanError('unauthenticated', 'Log in before sending a support plan.')
+        throw new SupportPlanError('unauthenticated', 'Log in before using this service.')
       }
 
       let decodedToken
@@ -185,24 +194,62 @@ function createSupportPlanHttpHandler({
       try {
         decodedToken = await verifyIdToken(match[1])
       } catch {
-        throw new SupportPlanError('unauthenticated', 'Log in again before sending a support plan.')
+        throw new SupportPlanError('unauthenticated', 'Log in again before using this service.')
       }
 
       uid = decodedToken?.uid || decodedToken?.sub || ''
 
       if (!uid) {
-        throw new SupportPlanError('unauthenticated', 'Log in again before sending a support plan.')
+        throw new SupportPlanError('unauthenticated', 'Log in again before using this service.')
       }
 
       const data = parseRequestBody(request.body, request.isBase64Encoded)
-      const result = await handleSupportPlan({ auth: { uid, token: decodedToken }, data })
+      const authenticatedRequest = { auth: { uid, token: decodedToken }, data }
+      let result
+
+      if (request.path === '/' || request.path === '/support-plan') {
+        result = await handleSupportPlan(authenticatedRequest)
+      } else if (/^\/ratings\/[a-z0-9][a-z0-9-]*$/u.test(request.path)) {
+        if (typeof handleSaveRating !== 'function') {
+          return jsonResponse(
+            404,
+            { error: { code: 'not-found', message: 'This API route does not exist.' } },
+            origin,
+            originAllowlist,
+          )
+        }
+
+        const resourceId = request.path.slice('/ratings/'.length)
+        result = await handleSaveRating({
+          ...authenticatedRequest,
+          data: { ...data, resourceId },
+        })
+      } else if (request.path === '/rating-analytics/rebuild') {
+        if (typeof handleRebuildRatingAnalytics !== 'function') {
+          return jsonResponse(
+            404,
+            { error: { code: 'not-found', message: 'This API route does not exist.' } },
+            origin,
+            originAllowlist,
+          )
+        }
+
+        result = await handleRebuildRatingAnalytics(authenticatedRequest)
+      } else {
+        return jsonResponse(
+          404,
+          { error: { code: 'not-found', message: 'This API route does not exist.' } },
+          origin,
+          originAllowlist,
+        )
+      }
 
       return jsonResponse(200, { data: result }, origin, originAllowlist)
     } catch (error) {
       const mapped = mapHttpError(error)
 
       if (!(error instanceof SupportPlanError)) {
-        logger.error('Support plan request failed.', {
+        logger.error('API request failed.', {
           errorName: error?.name || 'Error',
           uid: uid || 'unauthenticated',
         })
@@ -211,6 +258,10 @@ function createSupportPlanHttpHandler({
       return jsonResponse(mapped.statusCode, mapped.payload, origin, originAllowlist)
     }
   }
+}
+
+function createSupportPlanHttpHandler(options) {
+  return createApiHttpHandler(options)
 }
 
 function getServiceAccount(environment) {
@@ -269,10 +320,16 @@ function createRuntimeHandler(environment = process.env) {
     }),
     timestampFromDate: (date) => Timestamp.fromDate(date),
   })
+  const ratingOptions = {
+    db,
+    createTimestamp: () => Timestamp.now(),
+  }
 
-  return createSupportPlanHttpHandler({
+  return createApiHttpHandler({
     verifyIdToken: (token) => auth.verifyIdToken(token, true),
     handleSupportPlan,
+    handleSaveRating: createSaveRatingHandler(ratingOptions),
+    handleRebuildRatingAnalytics: createRebuildRatingAnalyticsHandler(ratingOptions),
     allowedOrigins: environment.ALLOWED_ORIGINS,
   })
 }
@@ -284,7 +341,7 @@ async function handler(event, context, callback) {
     runtimeHandler ||= createRuntimeHandler()
     response = await runtimeHandler(event)
   } catch (error) {
-    console.error('Support plan function could not start.', {
+    console.error('API function could not start.', {
       errorName: error?.name || 'Error',
       requestId: context?.requestId || 'unknown',
     })
@@ -299,7 +356,7 @@ async function handler(event, context, callback) {
       body: JSON.stringify({
         error: {
           code: 'internal',
-          message: 'The support plan service is not configured.',
+          message: 'The API service is not configured.',
         },
       }),
     }
@@ -314,6 +371,7 @@ async function handler(event, context, callback) {
 }
 
 module.exports = {
+  createApiHttpHandler,
   createRuntimeHandler,
   createSupportPlanHttpHandler,
   getServiceAccount,
