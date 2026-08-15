@@ -11,9 +11,9 @@ resource details remain available offline, while ratings, external websites,
 account operations, administration and other network-backed workflows are
 disabled or routed to an offline explanation.
 
-Stages 1-8 are configured and verified. Stage 9 is implemented and has passed
-local verification; its production-style browser offline/reconnect and mobile
-acceptance checks remain pending. The service worker precaches only the static
+Stages 1-9 are configured and verified. Stage 9 passed production-preview
+browser checks for offline/reconnect behavior, saved resource access, cache
+privacy and mobile layout. The service worker precaches only the static
 application shell and defines no API runtime cache. Firebase and Alibaba API
 responses, identity tokens, profiles, email data and ratings are never written
 to the PWA cache. The local `.env.local`, cloud upload archives and all provider
@@ -370,8 +370,8 @@ Function Compute from terminal and browser clients.
 ### A3 Stage 9 — Offline status and saved resources
 
 **Git checkpoint:** `bc0528b` — `feat(pwa): add offline status and saved resources`
-**Status:** Implemented, committed and pushed to `origin/main`; production-style
-browser verification is pending.
+**Status:** Implemented, committed, pushed to `origin/main` and verified in a
+production-preview browser workflow.
 
 - Added an installable PWA manifest, application icons and an automatically
   updating Workbox service worker.
@@ -391,6 +391,16 @@ browser verification is pending.
 - The generated service worker precached 18 unique static URLs. A structured
   manifest check found no Firebase, Alibaba or API URLs and confirmed the
   protected-navigation denylist.
+- Browser verification saved two resources, stopped the preview server and
+  reloaded `/saved` successfully from Service Worker responses. Saved details
+  remained available, while ratings and external website actions were disabled
+  after the browser entered offline mode.
+- Offline navigation to the nearby workflow was redirected to `/offline`, and
+  restoring connectivity returned live website and rating actions without a
+  console error.
+- The `390 x 844` saved-resource layout had no horizontal page overflow or
+  clipped controls. Cache inspection still found exactly 18 same-origin static
+  assets and no Firebase, Alibaba or `/api` responses.
 
 ### Later stages and submissions
 
