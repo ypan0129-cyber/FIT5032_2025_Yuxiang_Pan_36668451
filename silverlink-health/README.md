@@ -11,9 +11,10 @@ and read a privacy-safe rating aggregate through
 cross-origin reads, uses short cache lifetimes and never returns user IDs,
 contact details, roles, individual scores or internal rating fields.
 
-Stages 1-7 are configured and verified. Stage 8 is implemented and tested
-locally, with Alibaba Cloud deployment and production endpoint checks still
-pending. Its OpenAPI 3.1 contract is stored in `docs/openapi.json`. The local
+Stages 1-8 are configured and verified. The Stage 8 function is deployed to
+Alibaba Cloud, and its production endpoints, CORS policy, caches, stable errors,
+privacy boundary and browser cross-origin workflow have passed acceptance
+checks. Its OpenAPI 3.1 contract is stored in `docs/openapi.json`. The local
 `.env.local`, cloud upload archives and all provider credentials remain ignored
 by Git.
 
@@ -27,8 +28,9 @@ access-denied page.
 
 The browser directory reads its six service records from the local JavaScript
 data structure, and the public API exposes the same published records. Ratings
-are stored privately at `resources/{resourceId}/ratings/{uid}`. Using the authenticated user ID as the
-document ID ensures that one member has only one rating per resource. Public
+are stored privately at `resources/{resourceId}/ratings/{uid}`. Using the
+authenticated user ID as the document ID ensures that one member has only one
+rating per resource. Public
 summaries are stored separately at `ratingAnalytics/{resourceId}` without user
 IDs. Firestore Security Rules let a member read only their own rating, prevent
 all browser rating and aggregate writes, and expose only the six known summary
@@ -335,9 +337,9 @@ when a later stage is finished.
 
 ### A3 Stage 8 — Public resource REST API
 
-**Git checkpoint:** `a30a43d` — `feat(api): expose public resource REST endpoints`
-**Status:** Implemented locally, committed and pushed to `origin/main`; Alibaba
-Cloud deployment and production verification are pending.
+**Git checkpoints:** `a30a43d` — `feat(api): expose public resource REST endpoints`; `303ae26` — `docs(api): record Stage 8 local verification`
+**Status:** Committed, pushed to `origin/main` and verified against Alibaba Cloud
+Function Compute from terminal and browser clients.
 
 - Added anonymous, versioned `GET /api/v1/resources` and
   `GET /api/v1/resources/{resourceId}/summary` endpoints to the existing
@@ -354,7 +356,15 @@ Cloud deployment and production verification are pending.
   function suite also passing under Node.js 20. The production build, both
   zero-vulnerability production dependency audits and `git diff --check` passed.
 - Rebuilt the ignored Alibaba Cloud deployment archive without environment files.
-  Production CORS, caching, response and error checks remain pending deployment.
+- The deployed list and known-summary routes returned `200` with six expected
+  resource IDs and respective 300-second and 60-second caches. Unknown resources
+  returned `404`, unsupported public methods returned `405`, and cross-origin
+  preflight returned `204` with wildcard public-read CORS.
+- A structured production response scan found no account, role, individual-score
+  or internal aggregate fields. Existing protected routes continued to return
+  `401` without a Firebase token and `403` for an untrusted origin.
+- A browser client on the local application origin fetched and parsed all six
+  production resources without a CORS or console error.
 
 ### Later stages and submissions
 
