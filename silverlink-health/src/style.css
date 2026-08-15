@@ -202,6 +202,40 @@ p {
   gap: 32px;
 }
 
+.connectivity-status {
+  border-bottom: 1px solid var(--colour-border);
+  background: var(--colour-surface);
+  color: var(--colour-muted);
+  font-size: 0.82rem;
+}
+
+.connectivity-status--offline {
+  border-bottom-color: #d9bd72;
+  background: #fff7df;
+  color: #5c4310;
+}
+
+.connectivity-status__inner {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 5px;
+}
+
+.connectivity-status p,
+.connectivity-status a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.connectivity-status a {
+  font-weight: 700;
+}
+
 .brand {
   display: inline-flex;
   flex: 0 0 auto;
@@ -535,6 +569,29 @@ p {
   align-self: flex-start;
 }
 
+.resource-card__actions {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resource-save-button {
+  flex: 0 0 auto;
+  padding-inline: 10px;
+}
+
+.resource-save-button[aria-pressed='true'] {
+  background: var(--colour-primary-light);
+}
+
+.resource-save-error {
+  margin: 10px 0 0;
+  color: #8f2f2f;
+  font-size: 0.82rem;
+}
+
 .page-intro {
   border-bottom: 1px solid var(--colour-border);
   background: var(--colour-surface);
@@ -737,6 +794,15 @@ p {
 
 .contact-card dd {
   margin: 0 0 0 29px;
+  color: var(--colour-muted);
+}
+
+.resource-detail__save {
+  margin-bottom: 12px;
+}
+
+.offline-action {
+  cursor: not-allowed;
   color: var(--colour-muted);
 }
 
@@ -1198,6 +1264,10 @@ p {
     flex: 1;
   }
 
+  .connectivity-status__inner {
+    min-height: 42px;
+  }
+
   .service-steps {
     grid-template-columns: 1fr;
   }
@@ -1321,6 +1391,13 @@ p {
     align-items: flex-start;
   }
 
+  .connectivity-status__inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+    padding-block: 8px;
+  }
+
   .resource-detail__layout {
     gap: 36px;
   }
@@ -1374,6 +1451,11 @@ p {
 
   .resource-card {
     padding: 22px;
+  }
+
+  .resource-card__actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .results-heading {

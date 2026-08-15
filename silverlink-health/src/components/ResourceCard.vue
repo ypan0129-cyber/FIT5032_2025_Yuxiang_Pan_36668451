@@ -1,12 +1,28 @@
 <script setup>
-import { ChevronRight, Clock, MapPin, Phone } from '@lucide/vue'
+import { Bookmark, BookmarkCheck, ChevronRight, Clock, MapPin, Phone } from '@lucide/vue'
+import { computed, ref } from 'vue'
+import { useSavedResources } from '../services/savedResources'
 
-defineProps({
+const props = defineProps({
   resource: {
     type: Object,
     required: true,
   },
 })
+
+const saveError = ref('')
+const { isResourceSaved, toggleSavedResource } = useSavedResources()
+const isSaved = computed(() => isResourceSaved(props.resource.id))
+
+function handleSaveToggle() {
+  saveError.value = ''
+
+  try {
+    toggleSavedResource(props.resource.id)
+  } catch {
+    saveError.value = 'This resource could not be saved on this device.'
+  }
+}
 </script>
 
 <template>
@@ -30,9 +46,22 @@ defineProps({
       </div>
     </dl>
 
-    <RouterLink class="text-link resource-card__link" :to="`/resources/${resource.id}`">
-      View details
-      <ChevronRight :size="19" aria-hidden="true" />
-    </RouterLink>
+    <div class="resource-card__actions">
+      <RouterLink class="text-link resource-card__link" :to="`/resources/${resource.id}`">
+        View details
+        <ChevronRight :size="19" aria-hidden="true" />
+      </RouterLink>
+      <button
+        class="button button--quiet resource-save-button"
+        type="button"
+        :aria-pressed="isSaved"
+        @click="handleSaveToggle"
+      >
+        <BookmarkCheck v-if="isSaved" :size="18" aria-hidden="true" />
+        <Bookmark v-else :size="18" aria-hidden="true" />
+        {{ isSaved ? 'Saved' : 'Save' }}
+      </button>
+    </div>
+    <p v-if="saveError" class="resource-save-error" role="alert">{{ saveError }}</p>
   </article>
 </template>

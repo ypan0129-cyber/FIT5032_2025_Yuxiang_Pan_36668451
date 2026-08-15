@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
 
 const localSupportPlanOrigin = 'http://127.0.0.1:9000'
 
@@ -42,6 +43,42 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: {
+          name: 'SilverLink Health',
+          short_name: 'SilverLink',
+          description: 'Trusted Australian mental health support resources.',
+          theme_color: '#24665f',
+          background_color: '#ffffff',
+          display: 'standalone',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: 'icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+          ],
+        },
+        workbox: {
+          cleanupOutdatedCaches: true,
+          globPatterns: ['**/*.{css,html,js,jpg,png,svg,woff2}'],
+          globIgnores: ['icon-192.png', 'icon-512.png'],
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [
+            /^\/api\//u,
+            /^\/(?:account|admin|staff|support-plan|login|register|nearby)(?:\/|$)/u,
+          ],
+          runtimeCaching: [],
+        },
+      }),
       {
         name: 'support-plan-csp-origin',
         transformIndexHtml(html) {

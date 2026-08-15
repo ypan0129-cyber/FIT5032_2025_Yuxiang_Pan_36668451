@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import AppFooter from './components/AppFooter.vue'
 import AppHeader from './components/AppHeader.vue'
+import ConnectivityStatus from './components/ConnectivityStatus.vue'
 import EmergencyBanner from './components/EmergencyBanner.vue'
 </script>
 
@@ -9,6 +10,7 @@ import EmergencyBanner from './components/EmergencyBanner.vue'
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <EmergencyBanner />
   <AppHeader />
+  <ConnectivityStatus />
   <main id="main-content" tabindex="-1">
     <RouterView />
   </main>

@@ -1,12 +1,37 @@
 <script setup>
-import { ArrowLeft, Clock, ExternalLink, MapPin, Phone } from '@lucide/vue'
-import { computed } from 'vue'
+import {
+  ArrowLeft,
+  Bookmark,
+  BookmarkCheck,
+  Clock,
+  ExternalLink,
+  MapPin,
+  Phone,
+  WifiOff,
+} from '@lucide/vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ResourceRating from '../components/ResourceRating.vue'
 import { getResourceById } from '../data/resources'
+import { useConnectivity } from '../services/connectivity'
+import { useSavedResources } from '../services/savedResources'
 
 const route = useRoute()
 const resource = computed(() => getResourceById(route.params.id))
+const saveError = ref('')
+const { isOnline } = useConnectivity()
+const { isResourceSaved, toggleSavedResource } = useSavedResources()
+const isSaved = computed(() => resource.value && isResourceSaved(resource.value.id))
+
+function handleSaveToggle() {
+  saveError.value = ''
+
+  try {
+    toggleSavedResource(resource.value.id)
+  } catch {
+    saveError.value = 'This resource could not be saved on this device.'
+  }
+}
 </script>
 
 <template>
@@ -35,7 +60,10 @@ const resource = computed(() => getResourceById(route.params.id))
 
           <section class="rating-preview" aria-labelledby="rating-title">
             <h2 id="rating-title">Helpfulness rating</h2>
-            <ResourceRating :resource-id="resource.id" />
+            <ResourceRating v-if="isOnline" :resource-id="resource.id" />
+            <p v-else class="form-notice" role="status">
+              Ratings are unavailable while offline.
+            </p>
           </section>
         </article>
 
@@ -55,7 +83,19 @@ const resource = computed(() => getResourceById(route.params.id))
               <dd>{{ resource.location }}</dd>
             </div>
           </dl>
+          <button
+            class="button button--secondary button--full resource-detail__save"
+            type="button"
+            :aria-pressed="isSaved"
+            @click="handleSaveToggle"
+          >
+            <BookmarkCheck v-if="isSaved" :size="18" aria-hidden="true" />
+            <Bookmark v-else :size="18" aria-hidden="true" />
+            {{ isSaved ? 'Saved on this device' : 'Save on this device' }}
+          </button>
+          <p v-if="saveError" class="resource-save-error" role="alert">{{ saveError }}</p>
           <a
+            v-if="isOnline"
             class="button button--primary button--full"
             :href="resource.website"
             target="_blank"
@@ -64,6 +104,10 @@ const resource = computed(() => getResourceById(route.params.id))
             Visit website
             <ExternalLink :size="18" aria-hidden="true" />
           </a>
+          <span v-else class="button button--quiet button--full offline-action" aria-disabled="true">
+            <WifiOff :size="18" aria-hidden="true" />
+            Website unavailable offline
+          </span>
         </aside>
       </div>
     </div>

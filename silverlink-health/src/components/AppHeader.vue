@@ -58,6 +58,7 @@ watch(
         <div class="primary-navigation__links">
           <RouterLink to="/">Home</RouterLink>
           <RouterLink to="/resources">Resources</RouterLink>
+          <RouterLink to="/saved">Saved resources</RouterLink>
           <RouterLink to="/nearby">Nearby services</RouterLink>
           <RouterLink v-if="authState.profile?.role === 'member'" to="/support-plan">
             Support plan
