@@ -4,19 +4,20 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 8 implements the public REST API innovation in F.1. Anonymous clients
-can list the six published support resources through `GET /api/v1/resources`
-and read a privacy-safe rating aggregate through
-`GET /api/v1/resources/{resourceId}/summary`. The versioned API allows
-cross-origin reads, uses short cache lifetimes and never returns user IDs,
-contact details, roles, individual scores or internal rating fields.
+A3 Stage 9 implements the offline-support innovation in F.1. The application is
+installable as a PWA, reports its current connectivity state and lets visitors
+save allowlisted public resource IDs on their device. The saved directory and
+resource details remain available offline, while ratings, external websites,
+account operations, administration and other network-backed workflows are
+disabled or routed to an offline explanation.
 
-Stages 1-8 are configured and verified. The Stage 8 function is deployed to
-Alibaba Cloud, and its production endpoints, CORS policy, caches, stable errors,
-privacy boundary and browser cross-origin workflow have passed acceptance
-checks. Its OpenAPI 3.1 contract is stored in `docs/openapi.json`. The local
-`.env.local`, cloud upload archives and all provider credentials remain ignored
-by Git.
+Stages 1-8 are configured and verified. Stage 9 is implemented and has passed
+local verification; its production-style browser offline/reconnect and mobile
+acceptance checks remain pending. The service worker precaches only the static
+application shell and defines no API runtime cache. Firebase and Alibaba API
+responses, identity tokens, profiles, email data and ratings are never written
+to the PWA cache. The local `.env.local`, cloud upload archives and all provider
+credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -365,6 +366,31 @@ Function Compute from terminal and browser clients.
   `401` without a Firebase token and `403` for an untrusted origin.
 - A browser client on the local application origin fetched and parsed all six
   production resources without a CORS or console error.
+
+### A3 Stage 9 — Offline status and saved resources
+
+**Git checkpoint:** `bc0528b` — `feat(pwa): add offline status and saved resources`
+**Status:** Implemented, committed and pushed to `origin/main`; production-style
+browser verification is pending.
+
+- Added an installable PWA manifest, application icons and an automatically
+  updating Workbox service worker.
+- Added a persistent Online/Offline indicator, saved-resource count, public
+  `/saved` directory and `/offline` explanation route.
+- Stored only unique allowlisted public resource IDs under the versioned
+  `silverlink.saved-public-resource-ids.v1` local-storage key. Account,
+  authentication, email and rating data are not stored there.
+- Kept saved resource cards and detail pages available offline, disabled rating
+  and website actions offline, and guarded network-backed application routes.
+- Configured an empty runtime-cache list and excluded `/api`, account,
+  authentication, support-plan, staff, administrator and nearby navigations
+  from the Workbox application-shell fallback.
+- Local verification passed 66 frontend tests and 37 function tests, the
+  production build, both zero-vulnerability production dependency audits and
+  `git diff --check`.
+- The generated service worker precached 18 unique static URLs. A structured
+  manifest check found no Firebase, Alibaba or API URLs and confirmed the
+  protected-navigation denylist.
 
 ### Later stages and submissions
 
