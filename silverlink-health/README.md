@@ -4,20 +4,26 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 6 implements the Firestore analytics innovation in F.1. Rating writes
-now pass through the authenticated Alibaba Cloud function, which updates the
-member's private rating and a privacy-safe aggregate in one Firestore
-transaction. The staff page presents those aggregate documents as an
-interactive Average score / Rating volume chart and an equivalent searchable,
-sortable and exportable table.
+A3 Stage 7 implements the administrator dashboard innovation in F.1. A separate
+`admin` role can open `/admin` and request system-level profile-role, rating and
+current email-dispatch metrics through the authenticated Alibaba Cloud API. The
+server verifies the Firebase ID token and Firestore role before querying only
+the fields needed for aggregate counts; it never returns user identifiers,
+contact details or individual ratings.
 
-Stages 1-6 are configured and verified. The Stage 6 function and Firestore
-rules are deployed, legacy ratings have been rebuilt, and the authenticated
-member/staff workflow has passed desktop and mobile checks. The local
-`.env.local`, cloud upload archives and all provider credentials remain ignored
-by Git.
+Stages 1-6 are configured and verified. Stage 7 is implemented and tested
+locally, but remains pending until the updated function is deployed, a test
+account is assigned the `admin` role, and the production desktop/mobile workflow
+is checked. The local `.env.local`, cloud upload archives and all provider
+credentials remain ignored by Git.
 
-All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
+All new accounts are created with the `member` role. The role is written by the
+application as a fixed value and enforced again by Firestore Security Rules;
+users cannot choose or elevate their own role. A Firebase project administrator
+can assign the `staff` or `admin` role by editing an existing `users/{uid}`
+document in the Firestore console. Staff accounts can access `/staff`, admin
+accounts can access `/admin`, and other roles are redirected to the generic
+access-denied page.
 
 The public directory still reads its six service records from the local
 JavaScript data structure. Ratings are stored privately at
@@ -41,7 +47,10 @@ documents. Passwords and email addresses are not stored in Firestore.
    deployment.
 6. Create a Cloud Firestore database in production mode. This project uses the Sydney region (`australia-southeast1`).
 7. Publish `firestore.rules` in the Firebase console, or deploy it with `npx firebase-tools deploy --only firestore:rules`.
-8. To create a staff account, register a normal member, locate its UID in Firebase Authentication, open the matching `users/{uid}` document, and change only the `role` field from `member` to `staff`. Refresh or sign in again before testing `/staff`.
+8. To create a staff or administrator account, register a normal member, locate
+   its UID in Firebase Authentication, open the matching `users/{uid}` document,
+   and change only the `role` field from `member` to `staff` or `admin`. Refresh
+   or sign in again before testing `/staff` or `/admin`.
 
 The real `.env.local` file is ignored by Git. Never add a Firebase service-account private key to this repository. Firebase Web configuration values are client configuration; access control is enforced by Authentication and Firestore Security Rules.
 
@@ -298,6 +307,25 @@ when a later stage is finished.
   chart and equivalent table refreshed to matching values.
 - Desktop interaction and a `390 x 844` mobile check passed for both chart
   modes, stacked controls, contained table scrolling and page overflow.
+
+### A3 Stage 7 — Role-protected administrator dashboard
+
+**Git checkpoint:** `00f3a95` — `feat(admin): add role-protected administration dashboard`
+**Status:** Committed and tested locally; cloud deployment and browser verification pending.
+
+- Added the protected `POST /admin/metrics` Alibaba Cloud API route with
+  Firebase ID-token verification and server-side `admin` role enforcement.
+- Aggregated user-role counts, known-resource rating totals and current UTC-day
+  email attempts without returning UIDs, names, email addresses, individual
+  ratings or provider message IDs.
+- Added the protected `/admin` route, role-aware navigation and account state,
+  responsive metric tiles, activity breakdowns, refresh handling and stable
+  loading/error states.
+- Kept administrative source collections closed to browser clients and added
+  explicit emulator evidence that an admin session cannot list them directly.
+- Local verification passed 55 frontend tests, 30 function tests, 6 Firestore
+  emulator tests, Node.js 20 execution, the production build,
+  zero-vulnerability production audits and `git diff --check`.
 
 ### Later stages and submissions
 
