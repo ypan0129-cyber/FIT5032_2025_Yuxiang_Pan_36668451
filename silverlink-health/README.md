@@ -11,11 +11,11 @@ transaction. The staff page presents those aggregate documents as an
 interactive Average score / Rating volume chart and an equivalent searchable,
 sortable and exportable table.
 
-Stages 1-5 are configured and verified. Stage 6 is implemented and tested
-locally, but remains pending until the updated function and Firestore rules are
-deployed, legacy ratings are rebuilt, and the production workflow is checked.
-The local `.env.local`, cloud upload archives and all provider credentials
-remain ignored by Git.
+Stages 1-6 are configured and verified. The Stage 6 function and Firestore
+rules are deployed, legacy ratings have been rebuilt, and the authenticated
+member/staff workflow has passed desktop and mobile checks. The local
+`.env.local`, cloud upload archives and all provider credentials remain ignored
+by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -277,8 +277,8 @@ when a later stage is finished.
 
 ### A3 Stage 6 — Privacy-safe Firestore rating analytics
 
-**Git checkpoint:** `216d1c4` — `feat(analytics): add privacy-safe Firestore rating charts`
-**Status:** Committed and tested locally; cloud deployment and browser verification pending.
+**Git checkpoints:** `216d1c4` — `feat(analytics): add privacy-safe Firestore rating charts`; `963fce2` — `docs(analytics): record Stage 6 local verification`
+**Status:** Committed, pushed to `origin/main` and verified against Firebase and Alibaba Cloud Function Compute.
 
 - Moved member rating writes behind the authenticated Alibaba Cloud API and
   added server-side resource, score and Firestore member-role validation.
@@ -289,9 +289,15 @@ when a later stage is finished.
 - Added a staff-authorised rebuild operation for legacy ratings, plus an
   interactive Chart.js Average score / Rating volume view and the existing
   accessible data table equivalent.
-- Local verification passed 49 frontend tests, 25 function tests, 5 Firestore
-  emulator tests, the production build, zero-vulnerability production audits
-  and `git diff --check`.
+- Verification passed 49 frontend tests, 25 function tests, 5 Firestore
+  emulator tests, Node.js 20 execution, the production build,
+  zero-vulnerability production audits and `git diff --check`.
+- The deployed rating and rebuild routes passed `204` CORS, `401`
+  authentication and `403` origin-boundary checks. A staff account rebuilt all
+  six aggregates, a member submitted and updated a real rating, and the staff
+  chart and equivalent table refreshed to matching values.
+- Desktop interaction and a `390 x 844` mobile check passed for both chart
+  modes, stacked controls, contained table scrolling and page overflow.
 
 ### Later stages and submissions
 
