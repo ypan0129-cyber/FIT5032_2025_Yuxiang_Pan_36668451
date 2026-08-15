@@ -4,15 +4,15 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 4 implements business requirement E.2. The nearby-services page can
-find an Australian start point from a suburb or postcode, or request the
-browser's current location. It ranks six Melbourne public mental-health access
-points by distance and can display a driving route, distance and estimated time
-to a selected service on an interactive Leaflet map. The same information
-remains available through an accessible service list and route summary.
+A3 Stage 5 implements business requirements D.2 and E.1. An authenticated
+member can select trusted services and send a support-plan email with a
+generated PDF attachment to the address verified by Firebase Authentication.
+The protected server-side workflow runs on Alibaba Cloud Function Compute in
+the Hong Kong region, verifies the Firebase ID token and Firestore member role,
+applies per-member limits, and sends the message through Resend.
 
-Stages 1-3 remain configured and verified. The local `.env.local` remains
-ignored by Git.
+Stages 1-5 are configured and verified. The local `.env.local`, cloud upload
+archives and all provider credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
@@ -242,19 +242,29 @@ when a later stage is finished.
   sorting, no-result handling, denied-location fallback, an error-free console
   and a 390 x 844 mobile layout without horizontal overflow.
 
+### A3 Stage 5 — Support-plan email with PDF attachment
+
+**Git checkpoints:** `2a6fa6e` — `feat(email): send support plans with PDF attachments`; `0c79bf9` — `refactor(email): move support plan function to Alibaba Cloud`; `c242d28` — `fix(function): support Alibaba Node 20 runtime`
+**Status:** Committed, pushed to `origin/main` and verified against Firebase, Alibaba Cloud Function Compute and Resend.
+
+- Added a protected `/support-plan` workflow where a verified member selects
+  one to three services, a contact preference and optional plain-text notes.
+- Added server-authoritative Firebase ID-token and Firestore member-role checks;
+  the recipient always comes from the verified token and cannot be supplied by
+  the browser.
+- Added in-memory PDF generation, escaped HTML/text email content, Resend
+  delivery, one-minute cooldown and five-message daily member limit.
+- Migrated the function from Blaze-dependent Firebase Functions to an Alibaba
+  Cloud Node.js 20 event function in `cn-hongkong`, with exact-origin CORS and
+  CSP configuration and environment-only credentials.
+- Verification completed: 45 frontend tests and 17 function tests passed under
+  the supported runtime, production builds and zero-vulnerability audits
+  passed, the deployed endpoint returned the expected 204/401 boundary
+  responses, and a real authenticated member received the email and readable
+  PDF attachment.
+
 ### Later stages and submissions
 
 Add each later feature or submission below this line, keeping all earlier stage
 records unchanged. Do not invent a commit hash before the corresponding commit
 has been created.
-
-```md
-### Stage 5 — Short descriptive title
-
-**Git checkpoint:** `abcdef1` — `commit subject`
-**Status:** Pending / committed and pushed to `origin/main`.
-
-- Describe the user-visible feature.
-- Describe the relevant data, authentication or security change.
-- Record the tests or manual verification completed.
-```
