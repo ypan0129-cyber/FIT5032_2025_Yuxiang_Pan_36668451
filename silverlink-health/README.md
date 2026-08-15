@@ -4,19 +4,29 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 5 implements business requirements D.2 and E.1. An authenticated
-member can select trusted services and send a support-plan email with a
-generated PDF attachment to the address verified by Firebase Authentication.
-The protected server-side workflow runs on Alibaba Cloud Function Compute in
-the Hong Kong region, verifies the Firebase ID token and Firestore member role,
-applies per-member limits, and sends the message through Resend.
+A3 Stage 6 implements the Firestore analytics innovation in F.1. Rating writes
+now pass through the authenticated Alibaba Cloud function, which updates the
+member's private rating and a privacy-safe aggregate in one Firestore
+transaction. The staff page presents those aggregate documents as an
+interactive Average score / Rating volume chart and an equivalent searchable,
+sortable and exportable table.
 
-Stages 1-5 are configured and verified. The local `.env.local`, cloud upload
-archives and all provider credentials remain ignored by Git.
+Stages 1-5 are configured and verified. Stage 6 is implemented and tested
+locally, but remains pending until the updated function and Firestore rules are
+deployed, legacy ratings are rebuilt, and the production workflow is checked.
+The local `.env.local`, cloud upload archives and all provider credentials
+remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the application as a fixed value and enforced again by Firestore Security Rules; users cannot choose or elevate their own role. A Firebase administrator can assign the `staff` role by editing an existing `users/{uid}` document in the Firestore console. Staff accounts can access `/staff`, while member accounts are redirected to the access-denied page.
 
-The public directory still reads its six service records from the local JavaScript data structure. Ratings are stored at `resources/{resourceId}/ratings/{uid}`. Using the authenticated user ID as the document ID ensures that one member has only one rating per resource. Firestore Security Rules validate the resource ID, require an integer score from 1 to 5, and prevent users from writing ratings for another account. Passwords and email addresses are not stored in Firestore.
+The public directory still reads its six service records from the local
+JavaScript data structure. Ratings are stored privately at
+`resources/{resourceId}/ratings/{uid}`. Using the authenticated user ID as the
+document ID ensures that one member has only one rating per resource. Public
+summaries are stored separately at `ratingAnalytics/{resourceId}` without user
+IDs. Firestore Security Rules let a member read only their own rating, prevent
+all browser rating and aggregate writes, and expose only the six known summary
+documents. Passwords and email addresses are not stored in Firestore.
 
 ## Firebase setup
 
@@ -71,6 +81,8 @@ Run the validation tests with:
 
 ```sh
 npm test
+npm run test:functions
+npm run test:rules
 ```
 
 The interface uses custom CSS and does not use a pre-built CSS template.
@@ -262,6 +274,24 @@ when a later stage is finished.
   passed, the deployed endpoint returned the expected 204/401 boundary
   responses, and a real authenticated member received the email and readable
   PDF attachment.
+
+### A3 Stage 6 — Privacy-safe Firestore rating analytics
+
+**Git checkpoint:** `216d1c4` — `feat(analytics): add privacy-safe Firestore rating charts`
+**Status:** Committed and tested locally; cloud deployment and browser verification pending.
+
+- Moved member rating writes behind the authenticated Alibaba Cloud API and
+  added server-side resource, score and Firestore member-role validation.
+- Added transactional `ratingAnalytics/{resourceId}` documents containing only
+  rating counts, totals, averages and score distributions, without user IDs.
+- Tightened Firestore rules so members can read only their own rating and no
+  browser client can list private ratings or forge aggregate documents.
+- Added a staff-authorised rebuild operation for legacy ratings, plus an
+  interactive Chart.js Average score / Rating volume view and the existing
+  accessible data table equivalent.
+- Local verification passed 49 frontend tests, 25 function tests, 5 Firestore
+  emulator tests, the production build, zero-vulnerability production audits
+  and `git diff --check`.
 
 ### Later stages and submissions
 
