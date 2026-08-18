@@ -281,6 +281,7 @@ async function planRoute(location) {
           <div class="service-location__actions">
             <a class="text-link" :href="location.website" target="_blank" rel="noopener noreferrer">
               Service information
+              <span class="sr-only"> (opens in a new tab)</span>
               <ExternalLink :size="16" aria-hidden="true" />
             </a>
             <button

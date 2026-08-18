@@ -102,6 +102,7 @@ function handleSaveToggle() {
             rel="noopener noreferrer"
           >
             Visit website
+            <span class="sr-only"> (opens in a new tab)</span>
             <ExternalLink :size="18" aria-hidden="true" />
           </a>
           <span v-else class="button button--quiet button--full offline-action" aria-disabled="true">

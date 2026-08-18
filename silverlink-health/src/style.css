@@ -9,7 +9,7 @@
   --colour-primary-dark: #164b46;
   --colour-primary-light: #dcebe7;
   --colour-emergency-bg: #fff1ef;
-  --colour-focus: #e0a21a;
+  --colour-focus: #9a6400;
   --page-width: 1120px;
   --page-gutter: 28px;
   --radius: 6px;
@@ -74,6 +74,7 @@ a:hover {
 :focus-visible {
   outline: 3px solid var(--colour-focus);
   outline-offset: 3px;
+  box-shadow: 0 0 0 1px #ffffff;
 }
 
 h1,
@@ -1474,5 +1475,21 @@ p {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid Highlight;
+    box-shadow: none;
   }
 }

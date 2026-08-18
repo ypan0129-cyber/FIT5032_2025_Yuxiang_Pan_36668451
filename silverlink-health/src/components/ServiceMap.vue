@@ -139,10 +139,11 @@ onBeforeUnmount(() => {
     <div
       ref="mapElement"
       class="service-map__canvas"
-      role="application"
+      role="region"
       aria-label="Interactive map of nearby mental health access points"
+      aria-describedby="service-map-description"
     ></div>
-    <p class="service-map__note">
+    <p id="service-map-description" class="service-map__note">
       Map data &copy; OpenStreetMap contributors. Use the service list below if you do not use the
       map.
     </p>

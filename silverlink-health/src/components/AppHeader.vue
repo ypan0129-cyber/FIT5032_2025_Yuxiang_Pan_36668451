@@ -1,10 +1,11 @@
 <script setup>
 import { LogOut, Menu, UserRound, X } from '@lucide/vue'
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { signOut, useAuth } from '../auth'
 
 const isMenuOpen = ref(false)
+const menuButton = ref(null)
 const isSigningOut = ref(false)
 const route = useRoute()
 const router = useRouter()
@@ -21,10 +22,25 @@ async function handleSignOut() {
   }
 }
 
+function closeMenu(restoreFocus = false) {
+  isMenuOpen.value = false
+
+  if (restoreFocus) {
+    nextTick(() => menuButton.value?.focus())
+  }
+}
+
+function handleMenuKeydown(event) {
+  if (event.key === 'Escape' && isMenuOpen.value) {
+    event.preventDefault()
+    closeMenu(true)
+  }
+}
+
 watch(
   () => route.fullPath,
   () => {
-    isMenuOpen.value = false
+    closeMenu()
   },
 )
 </script>
@@ -38,11 +54,13 @@ watch(
       </RouterLink>
 
       <button
+        ref="menuButton"
         class="icon-button menu-button"
         type="button"
         :aria-expanded="isMenuOpen"
         aria-controls="primary-navigation"
         :aria-label="isMenuOpen ? 'Close navigation' : 'Open navigation'"
+        @keydown="handleMenuKeydown"
         @click="isMenuOpen = !isMenuOpen"
       >
         <X v-if="isMenuOpen" :size="24" aria-hidden="true" />

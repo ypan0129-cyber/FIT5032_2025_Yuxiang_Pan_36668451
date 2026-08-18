@@ -14,6 +14,7 @@ import ResourcesView from '../views/ResourcesView.vue'
 import SavedResourcesView from '../views/SavedResourcesView.vue'
 import StaffView from '../views/StaffView.vue'
 import SupportPlanView from '../views/SupportPlanView.vue'
+import { focusMainContent, getDocumentTitle } from '../utils/accessibility'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,50 +22,50 @@ const router = createRouter({
     return { top: 0 }
   },
   routes: [
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/resources', name: 'resources', component: ResourcesView },
-    { path: '/saved', name: 'saved-resources', component: SavedResourcesView },
-    { path: '/nearby', name: 'nearby', component: MapView, meta: { requiresOnline: true } },
-    { path: '/resources/:id', name: 'resource-detail', component: ResourceDetailView },
+    { path: '/', name: 'home', component: HomeView, meta: { title: 'Home' } },
+    { path: '/resources', name: 'resources', component: ResourcesView, meta: { title: 'Resources' } },
+    { path: '/saved', name: 'saved-resources', component: SavedResourcesView, meta: { title: 'Saved resources' } },
+    { path: '/nearby', name: 'nearby', component: MapView, meta: { title: 'Nearby services', requiresOnline: true } },
+    { path: '/resources/:id', name: 'resource-detail', component: ResourceDetailView, meta: { title: 'Resource details' } },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { requiresGuest: true, requiresOnline: true },
+      meta: { title: 'Log in', requiresGuest: true, requiresOnline: true },
     },
     {
       path: '/register',
       name: 'register',
       component: RegisterView,
-      meta: { requiresGuest: true, requiresOnline: true },
+      meta: { title: 'Create an account', requiresGuest: true, requiresOnline: true },
     },
     {
       path: '/account',
       name: 'account',
       component: AccountView,
-      meta: { requiresAuth: true, requiresOnline: true },
+      meta: { title: 'Account', requiresAuth: true, requiresOnline: true },
     },
     {
       path: '/support-plan',
       name: 'support-plan',
       component: SupportPlanView,
-      meta: { requiresAuth: true, requiredRole: 'member', requiresOnline: true },
+      meta: { title: 'Support plan', requiresAuth: true, requiredRole: 'member', requiresOnline: true },
     },
     {
       path: '/staff',
       name: 'staff',
       component: StaffView,
-      meta: { requiresAuth: true, requiredRole: 'staff', requiresOnline: true },
+      meta: { title: 'Staff workspace', requiresAuth: true, requiredRole: 'staff', requiresOnline: true },
     },
     {
       path: '/admin',
       name: 'admin',
       component: AdminView,
-      meta: { requiresAuth: true, requiredRole: 'admin', requiresOnline: true },
+      meta: { title: 'Administration', requiresAuth: true, requiredRole: 'admin', requiresOnline: true },
     },
-    { path: '/offline', name: 'offline', component: OfflineView },
-    { path: '/access-denied', name: 'access-denied', component: AccessDeniedView },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
+    { path: '/offline', name: 'offline', component: OfflineView, meta: { title: 'Offline' } },
+    { path: '/access-denied', name: 'access-denied', component: AccessDeniedView, meta: { title: 'Access denied' } },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { title: 'Page not found' } },
   ],
 })
 
@@ -100,6 +101,19 @@ router.beforeEach(async (to) => {
   }
 
   return true
+})
+
+router.afterEach((to) => {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  document.title = getDocumentTitle(to.meta.title)
+  const scheduleFocus = typeof window !== 'undefined' && window.requestAnimationFrame
+    ? window.requestAnimationFrame.bind(window)
+    : (callback) => setTimeout(callback, 0)
+
+  scheduleFocus(() => focusMainContent(document))
 })
 
 export default router
