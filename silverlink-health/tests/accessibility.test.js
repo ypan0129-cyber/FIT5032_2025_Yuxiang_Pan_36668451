@@ -58,6 +58,7 @@ test('completed workflows retain semantic form, table and chart contracts', asyn
     readSource('../src/views/SupportPlanView.vue'),
   ])
 
+  assert.match(app, /@click="handleSkipLink"/u)
   assert.match(app, /id="main-content" tabindex="-1"/u)
   assert.match(dataTable, /<caption class="sr-only">/u)
   assert.match(dataTable, /aria-sort="getAriaSort\(column\)"/u)
