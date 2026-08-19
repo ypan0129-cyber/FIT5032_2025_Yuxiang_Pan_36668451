@@ -25,12 +25,18 @@ test('router defines page titles and moves focus to the main landmark after navi
 })
 
 test('mobile navigation supports Escape and returns focus to its trigger', async () => {
-  const header = await readSource('../src/components/AppHeader.vue')
+  const [header, style] = await Promise.all([
+    readSource('../src/components/AppHeader.vue'),
+    readSource('../src/style.css'),
+  ])
 
   assert.match(header, /ref="menuButton"/u)
   assert.match(header, /event\.key === 'Escape'/u)
   assert.match(header, /menuButton\.value\?\.focus\(\)/u)
   assert.match(header, /:aria-expanded="isMenuOpen"/u)
+  assert.match(style, /\.primary-navigation__links a \{[^}]*white-space: nowrap;/su)
+  assert.match(style, /\.primary-navigation__actions \.button \{[^}]*white-space: nowrap;/su)
+  assert.match(style, /@media \(max-width: 1199px\)/u)
 })
 
 test('map, external links and motion preferences have accessible alternatives', async () => {
