@@ -4,19 +4,20 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 10 completes the WCAG 2.1 AA remediation and audit for the implemented
-workflows. The application now gives every route a descriptive title, moves
-focus to the main landmark after SPA navigation, provides a keyboard-operable
-skip link and mobile menu, exposes text alternatives for maps and charts, and
-supports reduced-motion and forced-colors preferences.
+A3 Stage 11 adds Firebase Hosting deployment for the completed Vue/PWA
+application. The local implementation serves the production `dist` build with
+SPA route fallback, strict production security headers, safe PWA cache headers
+and scripts limited to Hosting and Firestore Rules. The existing server-side
+API remains on Alibaba Cloud Function Compute, so this deployment works with
+the Firebase Spark plan.
 
-Stages 1-10 are configured and verified. Stage 10 passed 71 automated tests,
-the production build and production-preview browser checks for keyboard focus,
-mobile navigation, accessibility-tree structure, external-link announcements,
-responsive reflow and media preferences. A native VoiceOver or equivalent
-screen-reader session remains recommended as a final human acceptance check.
-The local `.env.local`, cloud upload archives and all provider credentials
-remain ignored by Git.
+Stages 1-10 are configured and verified. Stage 11 is implemented and verified
+locally; its Firebase deployment and public-origin acceptance checks remain.
+The Hosting emulator passed direct deep-route, security-header and cache-policy
+checks, and 75 automated tests plus the production build passed. Deployment
+instructions and the cross-cloud origin checklist are in
+`docs/DEPLOYMENT.md`. The local `.env.local`, cloud upload archives and all
+provider credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -425,6 +426,27 @@ production-preview browser workflow.
 - Reduced-motion and forced-colors media queries were exercised, the browser
   accessibility structure exposed the expected landmarks, headings, labels and
   alternatives, and no application console errors were reported.
+
+### A3 Stage 11 — Firebase production hosting
+
+**Git checkpoint:** `36ba528` — `chore(deploy): configure Firebase production hosting`
+**Status:** Implemented and pushed to `origin/main`; cloud deployment and public acceptance checks are pending.
+
+- Configured Firebase Hosting to publish only the generated `dist` directory
+  and route direct SPA requests to `index.html`.
+- Added production CSP, permissions, referrer, transport, clickjacking and
+  content-type headers. Hash-named assets use immutable caching, while HTML,
+  the manifest and service-worker entry points always revalidate.
+- Added build-first deployment scripts limited to Hosting and Firestore Rules;
+  Firebase Functions, Storage and unrelated project resources are excluded.
+- Kept the authenticated API on Alibaba Cloud Function Compute, allowing the
+  frontend deployment to remain compatible with Firebase Spark.
+- Added four focused deployment tests and a repeatable production deployment,
+  acceptance and rollback guide in `docs/DEPLOYMENT.md`.
+- Local verification passed 75 frontend tests, the production build,
+  zero-vulnerability audit and `git diff --check`. The Firebase Hosting emulator
+  returned the SPA for a deep resource route and applied the intended security
+  and cache headers.
 
 ### Later stages and submissions
 
