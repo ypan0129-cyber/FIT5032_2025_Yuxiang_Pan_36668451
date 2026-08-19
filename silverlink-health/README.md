@@ -4,20 +4,19 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 9 implements the offline-support innovation in F.1. The application is
-installable as a PWA, reports its current connectivity state and lets visitors
-save allowlisted public resource IDs on their device. The saved directory and
-resource details remain available offline, while ratings, external websites,
-account operations, administration and other network-backed workflows are
-disabled or routed to an offline explanation.
+A3 Stage 10 completes the WCAG 2.1 AA remediation and audit for the implemented
+workflows. The application now gives every route a descriptive title, moves
+focus to the main landmark after SPA navigation, provides a keyboard-operable
+skip link and mobile menu, exposes text alternatives for maps and charts, and
+supports reduced-motion and forced-colors preferences.
 
-Stages 1-9 are configured and verified. Stage 9 passed production-preview
-browser checks for offline/reconnect behavior, saved resource access, cache
-privacy and mobile layout. The service worker precaches only the static
-application shell and defines no API runtime cache. Firebase and Alibaba API
-responses, identity tokens, profiles, email data and ratings are never written
-to the PWA cache. The local `.env.local`, cloud upload archives and all provider
-credentials remain ignored by Git.
+Stages 1-10 are configured and verified. Stage 10 passed 71 automated tests,
+the production build and production-preview browser checks for keyboard focus,
+mobile navigation, accessibility-tree structure, external-link announcements,
+responsive reflow and media preferences. A native VoiceOver or equivalent
+screen-reader session remains recommended as a final human acceptance check.
+The local `.env.local`, cloud upload archives and all provider credentials
+remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -401,6 +400,31 @@ production-preview browser workflow.
 - The `390 x 844` saved-resource layout had no horizontal page overflow or
   clipped controls. Cache inspection still found exactly 18 same-origin static
   assets and no Firebase, Alibaba or `/api` responses.
+
+### A3 Stage 10 — WCAG 2.1 AA remediation
+
+**Git checkpoints:** `6cf866c` — `feat(a11y): complete WCAG 2.1 AA remediation`; `6fe70f8` — `fix(a11y): focus skip link target`
+**Status:** Implemented, committed and verified in a production-preview browser workflow.
+
+- Added descriptive SPA document titles and moved keyboard focus to the main
+  landmark after route changes without forcing the page to scroll.
+- Made the mobile navigation close with `Escape` and return focus to its menu
+  trigger, and fixed the skip link so activation explicitly focuses and scrolls
+  the main content into view.
+- Exposed the Leaflet map as a labelled region with a complete list alternative,
+  retained the rating chart's equivalent table and announced links that open a
+  new tab.
+- Strengthened visible focus styling and added reduced-motion and forced-colors
+  support, while preserving semantic forms, tables, live status and error text.
+- Local verification passed 71 frontend tests, 37 function tests, the production
+  build, both zero-vulnerability production dependency audits and
+  `git diff --check`.
+- Browser verification confirmed route titles and focus, Skip-link activation,
+  mobile-menu Escape behavior, accessible map/list and external-link structures,
+  and no horizontal overflow across four workflows at `390 x 844`.
+- Reduced-motion and forced-colors media queries were exercised, the browser
+  accessibility structure exposed the expected landmarks, headings, labels and
+  alternatives, and no application console errors were reported.
 
 ### Later stages and submissions
 

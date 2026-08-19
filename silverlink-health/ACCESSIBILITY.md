@@ -29,12 +29,22 @@ required before a release is marked fully verified.
 keyboard navigation contract, map semantics, external-link announcements,
 table/chart alternatives, form descriptions and high-contrast preferences.
 
-## Manual release checks
+## Stage 10 verification record
 
-Before marking this stage `Verified`, test the production preview at desktop
-and `390 x 844` mobile sizes with keyboard-only navigation, visible focus,
-skip-link activation, mobile-menu Escape behavior, form error recovery, table
-sorting/pagination, map-list alternatives, chart/table equivalence, browser
-zoom to 200%, reduced-motion preference, forced-colors/high-contrast mode and
-an accessibility-tree or screen-reader review. Record the result in the A3
-requirements matrix and in the stage submission commit.
+The production preview passed keyboard focus checks for SPA route changes,
+skip-link activation and mobile-menu `Escape` handling. Browser inspection
+confirmed descriptive titles, visible focus behavior, an accessible map region
+with a complete list alternative, chart/table equivalence, new-window link
+announcements and expected landmark, heading, label and live-region structure.
+
+Four representative workflows were checked at `390 x 844` with no horizontal
+page overflow, providing an equivalent reflow check for enlarged content.
+Reduced-motion and forced-colors media modes were exercised successfully, and
+the console reported no application errors. The complete frontend suite passed
+71 tests, including 5 focused accessibility checks, and the production build
+completed successfully.
+
+A native VoiceOver, NVDA or equivalent screen-reader session cannot be
+automated by this repository and remains recommended as a final human
+acceptance check before submission. Any issue found there should be recorded
+and fixed in a separate reviewable commit.
