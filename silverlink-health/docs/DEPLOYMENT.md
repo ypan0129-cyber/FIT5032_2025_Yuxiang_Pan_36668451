@@ -91,3 +91,28 @@ verified. At minimum confirm:
 If a release needs to be rolled back, use **Firebase Console → Hosting →
 Release history** to restore the last known-good version. A frontend rollback
 does not change the separately deployed Alibaba Cloud function.
+
+## Stage 11 production release record
+
+The first production release completed successfully on 19 August 2026. The
+Firebase CLI compiled and published `firestore.rules`, uploaded 20 generated
+Hosting files, finalised the Hosting version and released it to both default
+Firebase domains. The local deployment cache under `.firebase/` is ignored.
+
+Network acceptance confirmed that both domains and representative direct SPA
+routes returned HTTPS `200`, including the resource detail, saved, nearby,
+login and not-found routes. The public responses carried the configured
+security headers, HTML and service-worker entry points used no-store caching,
+and hash-named assets used immutable caching.
+
+The Alibaba Cloud endpoint returned an allowed `204` CORS preflight for both
+Firebase domains, retained a `401` boundary without a Firebase token, and its
+public API returned the six allowlisted resources without personal or internal
+rating fields. Browser checks confirmed the expected pages, route titles,
+login controls, no console errors and no horizontal overflow across four
+workflows at `390 x 844`.
+
+The automated browser environment did not expose the Service Worker API and did
+not hold a test Firebase account. A real-account Google sign-in, authenticated
+support-plan request and public-origin offline reload remain the final manual
+acceptance checks before D.4 is marked fully verified.

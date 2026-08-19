@@ -11,13 +11,13 @@ and scripts limited to Hosting and Firestore Rules. The existing server-side
 API remains on Alibaba Cloud Function Compute, so this deployment works with
 the Firebase Spark plan.
 
-Stages 1-10 are configured and verified. Stage 11 is implemented and verified
-locally; its Firebase deployment and public-origin acceptance checks remain.
-The Hosting emulator passed direct deep-route, security-header and cache-policy
-checks, and 75 automated tests plus the production build passed. Deployment
-instructions and the cross-cloud origin checklist are in
-`docs/DEPLOYMENT.md`. The local `.env.local`, cloud upload archives and all
-provider credentials remain ignored by Git.
+Stages 1-10 are configured and verified. Stage 11 is deployed at
+`https://sliverlink-health.web.app` and has passed its network, security,
+cross-cloud CORS, desktop and mobile public checks. Real-account Google sign-in,
+support-plan delivery and public-origin offline reload remain the final manual
+acceptance checks. Deployment evidence and the cross-cloud release checklist
+are in `docs/DEPLOYMENT.md`. The local `.env.local`, Firebase deployment cache,
+cloud upload archives and all provider credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -430,7 +430,7 @@ production-preview browser workflow.
 ### A3 Stage 11 — Firebase production hosting
 
 **Git checkpoint:** `36ba528` — `chore(deploy): configure Firebase production hosting`
-**Status:** Implemented and pushed to `origin/main`; cloud deployment and public acceptance checks are pending.
+**Status:** Deployed to both default Firebase Hosting domains; final real-account and offline manual checks are pending.
 
 - Configured Firebase Hosting to publish only the generated `dist` directory
   and route direct SPA requests to `index.html`.
@@ -447,6 +447,15 @@ production-preview browser workflow.
   zero-vulnerability audit and `git diff --check`. The Firebase Hosting emulator
   returned the SPA for a deep resource route and applied the intended security
   and cache headers.
+- Production deployment published 20 Hosting files and Firestore Rules to
+  `sliverlink-health`; both default Firebase domains and representative direct
+  SPA routes returned HTTPS `200` with the expected security and cache headers.
+- Alibaba Cloud allowed both production origins, retained the unauthenticated
+  `401` boundary and returned six privacy-safe public API records. Desktop and
+  `390 x 844` production browser checks had no console error or page overflow.
+- Final manual acceptance remains for a real-account Google sign-in,
+  authenticated support-plan delivery and an offline reload on the public
+  origin.
 
 ### Later stages and submissions
 
