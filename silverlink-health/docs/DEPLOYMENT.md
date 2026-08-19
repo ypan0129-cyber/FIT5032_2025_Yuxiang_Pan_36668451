@@ -113,6 +113,9 @@ login controls, no console errors and no horizontal overflow across four
 workflows at `390 x 844`.
 
 The automated browser environment did not expose the Service Worker API and did
-not hold a test Firebase account. A real-account Google sign-in, authenticated
-support-plan request and public-origin offline reload remain the final manual
-acceptance checks before D.4 is marked fully verified.
+not hold a test Firebase account, so the remaining workflows were completed in
+a real user browser. Google sign-in succeeded on the public origin, a member
+saved a rating, and the authenticated support-plan workflow delivered its email
+and PDF attachment. After a public resource was saved online, `/saved` and the
+saved detail reloaded successfully in browser Offline mode with live actions
+appropriately unavailable. These checks complete the Stage 11 D.4 acceptance.

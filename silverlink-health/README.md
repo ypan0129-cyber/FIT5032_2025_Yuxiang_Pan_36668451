@@ -4,20 +4,19 @@ SilverLink Health is a Vue 3 web application that helps older Australians find m
 
 ## Current stage
 
-A3 Stage 11 adds Firebase Hosting deployment for the completed Vue/PWA
-application. The local implementation serves the production `dist` build with
-SPA route fallback, strict production security headers, safe PWA cache headers
-and scripts limited to Hosting and Firestore Rules. The existing server-side
-API remains on Alibaba Cloud Function Compute, so this deployment works with
-the Firebase Spark plan.
+A3 Stages 1-11 are implemented and verified. The completed Vue/PWA application
+is publicly available at `https://sliverlink-health.web.app`; Firebase Hosting
+serves the SPA with production security and cache headers, Firestore Rules are
+published, and authenticated server-side workflows use Alibaba Cloud Function
+Compute without requiring the Firebase Blaze plan.
 
-Stages 1-10 are configured and verified. Stage 11 is deployed at
-`https://sliverlink-health.web.app` and has passed its network, security,
-cross-cloud CORS, desktop and mobile public checks. Real-account Google sign-in,
-support-plan delivery and public-origin offline reload remain the final manual
-acceptance checks. Deployment evidence and the cross-cloud release checklist
-are in `docs/DEPLOYMENT.md`. The local `.env.local`, Firebase deployment cache,
-cloud upload archives and all provider credentials remain ignored by Git.
+Stage 11 passed automated, network, desktop, mobile and real-account production
+acceptance. Google sign-in, rating save, support-plan email/PDF delivery and
+saved-resource offline reload all succeeded from the public origin. Stage 12
+will assemble the research, demonstration and final-submission evidence without
+changing the verified business behavior. Deployment evidence is in
+`docs/DEPLOYMENT.md`. The local `.env.local`, Firebase deployment cache, cloud
+upload archives and all provider credentials remain ignored by Git.
 
 All new accounts are created with the `member` role. The role is written by the
 application as a fixed value and enforced again by Firestore Security Rules;
@@ -429,8 +428,8 @@ production-preview browser workflow.
 
 ### A3 Stage 11 — Firebase production hosting
 
-**Git checkpoint:** `36ba528` — `chore(deploy): configure Firebase production hosting`
-**Status:** Deployed to both default Firebase Hosting domains; final real-account and offline manual checks are pending.
+**Git checkpoints:** `36ba528` — `chore(deploy): configure Firebase production hosting`; `6033e11` — `docs(deploy): record Stage 11 production release`
+**Status:** Deployed to both default Firebase Hosting domains and fully verified.
 
 - Configured Firebase Hosting to publish only the generated `dist` directory
   and route direct SPA requests to `index.html`.
@@ -453,9 +452,9 @@ production-preview browser workflow.
 - Alibaba Cloud allowed both production origins, retained the unauthenticated
   `401` boundary and returned six privacy-safe public API records. Desktop and
   `390 x 844` production browser checks had no console error or page overflow.
-- Final manual acceptance remains for a real-account Google sign-in,
-  authenticated support-plan delivery and an offline reload on the public
-  origin.
+- Final real-browser acceptance passed Google sign-in, member rating save,
+  authenticated support-plan email/PDF delivery and saved-resource reload in
+  public-origin Offline mode.
 
 ### Later stages and submissions
 
